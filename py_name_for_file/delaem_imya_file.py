@@ -1,8 +1,13 @@
 import json
 import os
 import re
+import sys
 
-folder = os.path.dirname(os.path.abspath(__file__))
+# Если передан аргумент - используем его, иначе папка скрипта
+if len(sys.argv) > 1:
+    folder = sys.argv[1]
+else:
+    folder = os.path.dirname(os.path.abspath(__file__))
 
 for filename in os.listdir(folder):
     if not filename.endswith('.json'):
@@ -17,7 +22,6 @@ for filename in os.listdir(folder):
     if not name:
         continue
 
-    # Убираем запрещённые символы
     safe = re.sub(r'[\\/:*?"<>|]', '_', name)
     new_filename = safe + '.json'
     new_filepath = os.path.join(folder, new_filename)

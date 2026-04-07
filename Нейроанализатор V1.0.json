@@ -1,0 +1,314 @@
+{
+  "updatedAt": "2026-02-13T12:34:12.291Z",
+  "createdAt": "2026-02-13T09:50:12.017Z",
+  "id": "z2aihBr47cN4OJeq",
+  "name": "Нейроанализатор V1.0",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        480
+      ],
+      "id": "e3d4371b-c194-4a08-8250-3fd2bf2e017b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4",
+          "mode": "list",
+          "cachedResultName": "Parket-Step.ru - Оптимизация фильтровых страниц",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2778651,
+          "mode": "list",
+          "cachedResultName": "Neuro&AI",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4/edit#gid=2778651"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Neuro"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        480
+      ],
+      "id": "d7b35f91-0033-4b11-8b88-0d683f33b41a",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — \"Нейроанализатор 4.0\" (Advanced Semantic Engine), высокоуровневая экспертная система SEO-аналитики и проектирования структуры контента.\n\n### SYSTEM CONSTRAINTS (ОБЯЗАТЕЛЬНО):\n- Ты работаешь как детерминированный конвейер. На вход подаются данные — на выход строго JSON.\n- ЗАПРЕЩЕНО: приветствия, извинения, пояснения, комментарии вне JSON-структуры, markdown-обёртки (```json), переспросы.\n- Если входных данных недостаточно для полного анализа — заполни поле максимально возможным результатом, не оставляй пустым.\n- Каждый запуск должен давать идентичную структуру ответа независимо от ниши.\n- Язык ответа: русский.\n\n### ВХОДНЫЕ ДАННЫЕ ДЛЯ АНАЛИЗА:\n1. Тема/Кластер (H1): {{ $json[\"Кластер\"] }}\n2. Исходный список поисковых запросов: {{ $json.col_2 }}\n3. Целевой URL объекта: {{ $json[\"SLUG 1\"] }}\n\n### ПОШАГОВЫЙ АЛГОРИТМ АНАЛИЗА:\n\n#### ШАГ 1: СТРАТЕГИЧЕСКАЯ ФИЛЬТРАЦИЯ И ОБОГАЩЕНИЕ СЕМАНТИЧЕСКОГО ВЕКТОРА\nЦель: отсеять шум и подготовить список запросов, задающий структуру поисковой выдачи.\n1. ОПРЕДЕЛЕНИЕ ТИПА КОНТЕНТА: Идентифицируй модель страницы (Листинг товаров, Карточка товара, Описание услуги, SaaS-решение, Статья-гайд).\n2. ОЧИСТКА И ПРИОРИТЕТИЗАЦИЯ: Удали опечатки, неявные дубли и запросы с \"нулевым\" смысловым весом.\n3. СИСТЕМНОЕ ОБОГАЩЕНИЕ: Добавь к ключам обязательные коммерческие и информационные хвосты (LSI-модификаторы), формирующие доверие и релевантность в Москве:\n   - Коммерческие: \"цены\", \"каталог\", \"характеристики\", \"прайс-лист\", \"в наличии\", \"стоимость за м2/ед\", \"официальный дилер\".\n   - Сервисные/Доверительные: \"фото\", \"примеры\", \"сертификаты\", \"инструкция\", \"условия доставки/оплаты\", \"гарантия\".\n   - Специфические для ниши: (например, для материалов — \"ГОСТ\", для софта — \"интеграции\", для услуг — \"отзывы и кейсы\").\n4. Результат: Структурированный список из 10-15 запросов, отражающий полный интент группы.\n\n#### ШАГ 2: НЕЙРО-ВЕКТОРИЗАЦИЯ, ЛЕММАТИЗАЦИЯ И GAP-АНАЛИЗ\nЦель: разобрать кластер на атомарные сущности и выявить \"семантические дыры\".\n1. ЛЕММАТИЗАЦИЯ СУЩНОСТЕЙ: Выдели все значимые слова из запросов, приведи в начальную форму (леммы). Убери стоп-слова.\n2. КАТЕГОРИЗАЦИЯ ПО ДОМЕНАМ:\n   - Домен \"Объекты\": материалы, бренды, типы продуктов.\n   - Домен \"Процессы\": монтаж, расчет, доставка, эксплуатация.\n   - Домен \"Коммерция/Условия\": тарифы, акции, скидки, комплектации.\n   - Домен \"Спецификации\": классы, размеры, составы, госты, стандарты.\n3. АТРИБУТИВНЫЙ АНАЛИЗ: Временные (2025/2026), Качественные (преимущества), Локационные.\n4. ИНТЕНТ-АНАЛИЗ: % распределения (Транзакционный, Коммерческий исследовательский, Информационный, Навигационный).\n5. ИСКЛЮЧЕНИЯ: Какие слова исключены (бренды-мусор, гео-шум, нецелевые сущности).\n6. NEURO-GAP: Критические темы и сущности, которых НЕТ в исходном списке, но без которых страница не попадёт в ТОП-1.\n\n#### ШАГ 3: ПРОЕКТИРОВАНИЕ LSI-МАТРИЦЫ И КОНКУРЕНТНАЯ РАЗВЕДКА\nЦель: сформировать готовое ТЗ на расширение контента.\n1. LSI-БЛОКИ:\n   - Блок \"Техническая экспертиза\" (параметры, допуски, уникальные свойства).\n   - Блок \"Функциональная ценность\" (сопутствующие товары, сфера применения, эксплуатационные нюансы).\n   - Блок \"Конверсионный слой\" (документация, правила, требования регуляторов, сервис).\n2. ИСТОЧНИКИ: 10 реальных URL конкурентов-лидеров ТОП-10 Москвы с качественным контентом.\n\n### ФОРМАТ ОТВЕТА:\nОтвет — ТОЛЬКО валидный JSON-объект. Без ```json, без текста до/после, без BOM.\nЕсли значение содержит переносы строк — используй \\n.\nЕсли значение содержит кавычки — экранируй \\\".\n\n{\n  \"step_1\": \"Тип контента: [тип]\\nЗапросы:\\n[запрос 1]; [запрос 2]; ... ; [запрос N]\",\n  \"step_2\": \"Леммы: [лемма1], [лемма2], ...\\n\\nДомены:\\n• Объекты: ...\\n• Процессы: ...\\n• Коммерция: ...\\n• Спецификации: ...\\n\\nАтрибуты: ...\\n\\nИнтенты: Транзакционный X%, Коммерческий Y%, Информационный Z%, Навигационный W%\\n\\nИсключено: ...\\n\\nNeuro-Gap: ...\",\n  \"step_3\": \"Техническая экспертиза: ...\\n\\nФункциональная ценность: ...\\n\\nКонверсионный слой: ...\\n\\nИсточники:\\n1. [URL]\\n2. [URL]\\n...\\n10. [URL]\"\n}\n\n### OUTPUT JSON STRUCTURE:\n{\n  \"step_1\": \"Тип контента: [Тип]\\nЗапросы: [Запрос 1]; [Запрос 2]; [Запрос N]\",\n  \"step_2\": \"Леммы: [Лемма 1], [Лемма 2]\\n\\nДомены:\\n• Объекты: ...\\n• Процессы: ...\\n• Коммерция: ...\\n• Спецификации: ...\\n\\nАтрибуты: ...\\n\\nИнтенты: Т: X%, К: Y%, И: Z%, Н: W%\\n\\nИсключено: ...\\n\\nNeuro-Gap: ...\",\n  \"step_3\": \"Техническая экспертиза: ...\\n\\nФункциональная ценность: ...\\n\\nКонверсионный слой: ...\\n\\nИсточники:\\n1. [URL 1]\\n2. [URL 2]\\n3. [URL 10]\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1840,
+        320
+      ],
+      "id": "8b5f2d21-5d0c-48aa-ae32-fec3cf842104",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4",
+          "mode": "list",
+          "cachedResultName": "Parket-Step.ru - Оптимизация фильтровых страниц",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2778651,
+          "mode": "list",
+          "cachedResultName": "Neuro&AI",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MU7y_8h6MaGtvmpUIPfXsr0cf0XCOKdJ-1otJs34Dd4/edit#gid=2778651"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Кластер": "={{ $('Loop Over Items').item.json['Кластер'] }}",
+            "Neuro": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "Кластер"
+          ],
+          "schema": [
+            {
+              "id": "Кластер",
+              "displayName": "Кластер",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SLUG 1",
+              "displayName": "SLUG 1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Neuro",
+              "displayName": "Neuro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Text",
+              "displayName": "Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2192,
+        480
+      ],
+      "id": "81d8d7cf-1815-462c-9a5a-dfbaef3fe25c",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1616,
+        480
+      ],
+      "id": "7e121ce2-01c0-403a-a1f1-311a4eea8ae0",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "google/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "google/gemini-2.5-flash"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        528
+      ],
+      "id": "1c777c26-df84-4c51-a45a-ea224620c600",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "2dT5AYGyxwkhnA1b",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "ad71cc1c-4cf0-40f2-b78e-16f6691f70f3",
+  "activeVersionId": null,
+  "versionCounter": 14,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-13T09:50:12.022Z",
+      "createdAt": "2026-02-13T09:50:12.022Z",
+      "role": "workflow:owner",
+      "workflowId": "z2aihBr47cN4OJeq",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

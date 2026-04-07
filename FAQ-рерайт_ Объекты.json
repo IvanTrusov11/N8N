@@ -1,0 +1,408 @@
+{
+  "updatedAt": "2026-03-03T04:04:09.440Z",
+  "createdAt": "2026-03-03T03:24:06.328Z",
+  "id": "Ixt70ar33Q4UqCvC",
+  "name": "FAQ-рерайт: Объекты",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        48
+      ],
+      "id": "b98e0c77-eeb3-490d-9d06-218b000fe2b5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AbvPZPIUcYU1tMk7DzwcKRMhBSTw_NXaXjb3pXqj_wQ",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - FAQ/рерайт для Объектов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AbvPZPIUcYU1tMk7DzwcKRMhBSTw_NXaXjb3pXqj_wQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AbvPZPIUcYU1tMk7DzwcKRMhBSTw_NXaXjb3pXqj_wQ/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Рерайт (Вопрос)"
+            },
+            {
+              "lookupColumn": "Рерайт (Ответ)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -672,
+        48
+      ],
+      "id": "aafa4f67-8eaa-4fa7-abaa-df4d966d6987",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — SEO-копирайтер медицинского туристического портала. Твоя задача: сделать уникальный рерайт вопроса и ответа для конкретного санатория/объекта, чтобы контент не дублировался на других страницах сайта.\nВажно делать так, чтобы соблюдалась и seo-оптимизация. Важно писать уникальность на 100% - для основы у тебя есть текст конкурента. Можно осуществить рерайт с небольшим копирайтом.\n\nВажно: Объём контента по ОТВЕТАМ должен быть + - такой же, как в исходнике.\nВ исходнике - вопрос ответы конкурентов, потому и переписываем.\n\nОБЪЕКТ: {{ $json['Объект (H1)'] }}\n\nИСХОДНЫЙ ВОПРОС:\n{{ $json['Вопрос'] }}\n\nИСХОДНЫЙ ОТВЕТ:\n{{ $json['Ответ'] }}\n\nДУБЛЬ ВОПРОСА (НА ДРУГИХ СТРАНИЦАХ СТОИТ ТАК):\n{{ $json['Дубль вопроса'] }}\n\nДУБЛЬ ОТВЕТА (НА ДРУГИХ СТРАНИЦАХ СТОИТ ТАК):\n{{ $json['Дубль ответа'] }}\n\nЗАДАЧА:\n1. Перефразируй ВОПРОС — сохрани смысл, но измени формулировку. Привяжи к конкретному объекту \"{{ $json['Объект (H1)'] }}\" если это уместно.\n2. Перепиши ОТВЕТ — сохрани суть и факты, но сделай текст уникальным. Упомяни особенности конкретного объекта, региона или специализации, если это уместно.\n\nПРАВИЛА:\n- Рерайт должен кардинально отличаться от дублей выше\n- Сохраняй медицинскую точность\n- Текст — только на русском языке\n- Никакого HTML\n- Никаких комментариев от себя\n\nВЫДАЙ СТРОГО В ФОРМАТЕ JSON:\n{\n  \"rewrite_question\": \"здесь переписанный вопрос\",\n  \"rewrite_answer\": \"здесь переписанный ответ\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        160,
+        -96
+      ],
+      "id": "c74e5bd3-4a7a-4df4-9763-7e5913bfe9c9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1AbvPZPIUcYU1tMk7DzwcKRMhBSTw_NXaXjb3pXqj_wQ/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AbvPZPIUcYU1tMk7DzwcKRMhBSTw_NXaXjb3pXqj_wQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "№": "={{ $('Loop Over Items').item.json['№'] }}",
+            "Рерайт (Ответ)": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "№"
+          ],
+          "schema": [
+            {
+              "id": "№",
+              "displayName": "№",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Объект (H1)",
+              "displayName": "Объект (H1)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Вопрос",
+              "displayName": "Вопрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ответ",
+              "displayName": "Ответ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Дубль вопроса",
+              "displayName": "Дубль вопроса",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Дубль ответа",
+              "displayName": "Дубль ответа",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Рерайт (Вопрос)",
+              "displayName": "Рерайт (Вопрос)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Рерайт (Ответ)",
+              "displayName": "Рерайт (Ответ)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        80
+      ],
+      "id": "7018ab14-6a05-4b6d-9fba-3fe491ff5042",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -448,
+        48
+      ],
+      "id": "85297ff1-1179-49d9-b4a8-106434cce782",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        96,
+        144
+      ],
+      "id": "78dfe2cd-198a-471a-aac6-5e1e68adc08c",
+      "name": "Claude",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        288
+      ],
+      "id": "e32857d0-63b3-4ffa-a1a8-58563ed8d29a",
+      "name": "Free",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fGthAQoE0jOmscoH",
+          "name": "Google Gemini_№1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cef67896-1122-43f6-956c-cdf6822b4aa5",
+              "leftValue": "={{ $json['Рерайт (Ответ)'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "84690287-4fdb-4c61-a67e-ddc45ed8afd9",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "9500a92e-0fad-4ab8-ad6d-3b419f2747fd",
+  "activeVersionId": null,
+  "versionCounter": 10,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-03T03:24:06.336Z",
+      "createdAt": "2026-03-03T03:24:06.336Z",
+      "role": "workflow:owner",
+      "workflowId": "Ixt70ar33Q4UqCvC",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

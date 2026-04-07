@@ -1,0 +1,842 @@
+{
+  "updatedAt": "2026-03-20T09:18:14.904Z",
+  "createdAt": "2026-02-23T06:47:49.811Z",
+  "id": "Emj6dEmGw1vSL45O",
+  "name": "DaOffice - ТЗ на текст",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -576
+      ],
+      "id": "697188dd-9c90-410c-b557-ef3bebd1f397",
+      "name": "Запуск вручную"
+    },
+    {
+      "parameters": {
+        "jsCode": "const texts = $json.competitor_text;\nconst urls = $json.url;\nlet combined = '';\nfor (let i = 0; i < texts.length; i++) {\n  const text = texts[i] || '';\n  combined += `\\n\\n--- КОНКУРЕНТ ${i+1}: ${urls[i]} ---\\n${text.substring(0, 12000)}`;\n}\n\nreturn [{\n  json: {\n    combined_text: combined,\n    h1: $json.h1,\n    keywords: $json.keywords,\n    neuroanalysis: $json.neuroanalysis,\n    page_type: $json.page_type,\n    volume: $json.volume || '',\n    faq: $json.faq || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -288
+      ],
+      "id": "705f132f-ffb4-461e-b258-cbb2848cbc7d",
+      "name": "Собираем блок конкурентов"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -16
+      ],
+      "id": "b9f5aaa3-7c1d-4328-a8c9-75aa3ea5cf7f",
+      "name": "OpenRouter Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — SEO-аналитик. Анализируй весь переданный текст включая FAQ, цены, списки показаний и противопоказаний, описания процедур.\n### ОСНОВНОЙ КЛЮЧ:\n$('Внешний Loop').first().json\n### ТЕКСТЫ КОНКУРЕНТОВ:\n{{ $json.combined_text }}\nТексты разделены блоками вида: --- КОНКУРЕНТ N: URL ---\nИзвлеки:\n1. top_phrases — ТОП-10 фраз по следующему алгоритму:\n   Шаг 1: Для каждого конкурента отдельно найди ТОП-10 наиболее часто встречающихся слов/фраз, семантически близких к основному ключу. Учитывай морфологию — все словоформы одного слова считай как одну фразу и суммируй (например: \"почек\", \"почки\", \"почку\", \"почкам\" → одна фраза \"почки\"). То же для синонимов и устойчивых словосочетаний.\n   Шаг 2: Объедини списки всех конкурентов. Для каждой уникальной фразы (с учётом морфологии) посчитай вхождения у каждого конкурента отдельно.\n   Шаг 3: Отбери итоговый ТОП-10 по наибольшему значению avg (среднее только по конкурентам где фраза встречается, нули не считай). При равном avg — приоритет фразе с большим total.\nФормат каждой фразы:\n{\n  \"phrase\": \"почки\",\n  \"by_competitor\": {\"1\": 12, \"2\": 8, \"3\": 0, \"4\": 10},\n  \"total\": 30,\n  \"avg\": 10\n}\nгде by_competitor — реальные подсчёты у каждого конкурента с учётом всех словоформ.\navg — среднее только по конкурентам где фраза встречается (не считай нули).\n2. structure — ВСЕ значимые разделы на основе анализа всех конкурентов.\nИсключай заголовки содержащие названия конкретных клиник и брендов.\nТОЛЬКО заголовки реально присутствующие в текстах.\nФормат: {\"heading\": \"H2-заголовок\", \"theses\": [\"тезис 1\", \"тезис 2\"]}\n3. tone — тональность (1-3 слова)\n4. avg_volume — средний объём символов без пробелов по всем конкурентам. Считай весь текст: основные блоки, FAQ, цены, списки показаний, противопоказаний, преимуществ.\n5. common_blocks — блоки контента присутствующие у большинства конкурентов\n6. content_gaps — 3-5 тем которых НЕТ у конкурентов но которые усилят страницу\nТОЛЬКО валидный JSON без markdown-обёртки и пояснений.",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -208,
+        -288
+      ],
+      "id": "6dc4bb5d-f62a-4b02-aecd-e8a76d7a36f1",
+      "name": "LLM — анализ конкурентов"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo",
+          "mode": "list",
+          "cachedResultName": "DaOffice.ru - Блог: Темы для статей | Конкуренты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 149505172,
+          "mode": "list",
+          "cachedResultName": "SEO-ТЗ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo/edit#gid=149505172"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ТЗ",
+              "lookupValue": "="
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -944,
+        -576
+      ],
+      "id": "29cc5d73-15f6-4f6b-9a51-6b96011520c3",
+      "name": "Читаем ТЗ из таблицы1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $json;\nconst stopDomains = ['zoon.ru', 'docdoc.ru', '2gis.ru', 'youtube.com'];\n\nconst rawUrls = (row['Конкуренты ТОП-10'] || '').split(/\\r?\\n/).map(u => u.trim()).filter(Boolean);\nconst urls = rawUrls.filter(url => !stopDomains.some(domain => url.includes(domain)));\n\nif (urls.length === 0) throw new Error('Нет URL после фильтрации');\n\nreturn urls.map(url => ({\n  json: {\n    url,\n    row_num: row['№'],\n    h1: row['H1 (главный ключ)'],\n    keywords: row['Ключевые'],\n    neuroanalysis: row['Нейроанализ'],\n    page_type: row['Тип']\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -592
+      ],
+      "id": "d08bacd8-eafd-49bd-9c4f-7b51bec1a47e",
+      "name": "Разбиваем URL конкурентов1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "string"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        -592
+      ],
+      "id": "3ae111f2-fdcb-478e-9bdd-0ebd8e73257b",
+      "name": "HTTP Request — парсинг1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data || $json.body || Object.values($json).join('') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        -464
+      ],
+      "id": "2da3eed5-ee42-4902-a5b7-8bef288d0cea",
+      "name": "Markdown (прямой)1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer fc-0212389a677f49b7b1cee5d86b196795"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.url }}\",\n  \"formats\": [\"markdown\"],\n  \"onlyMainContent\": true,\n  \"excludeTags\": [\"nav\", \"footer\", \"header\", \"script\", \"style\", \"img\", \"svg\", \"form\", \"aside\", \".comments\", \".reviews\", \".sidebar\", \"#comments\", \"#reviews\", \".widget\", \".related\"]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -208,
+        -720
+      ],
+      "id": "655f2087-a048-46b5-b0c1-f0c6ad7c49d1",
+      "name": "FireCrawl1"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.html.markdown || '' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -720
+      ],
+      "id": "46ff852b-5a1c-4cae-8db0-8d13040173e8",
+      "name": "Markdown (FireCrawl)1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        368,
+        -592
+      ],
+      "id": "82eca92f-1dfd-417b-bf0f-d117644b68ab",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let rawText = '';\nif ($json.data) {\n  rawText = $json.data;\n} else if ($json.body) {\n  rawText = $json.body;\n} else if ($json.html) {\n  rawText = $json.html;\n} else if ($json['0'] !== undefined) {\n  rawText = Object.values($json).join('');\n}\n\nlet text = rawText.includes('<') && rawText.includes('>')\n  ? rawText.replace(/<[^>]+>/g, ' ')\n  : rawText;\n\ntext = text.replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1');\n\nconst cutPatterns = [\n  /\\n#+\\s*(Отзывы|Комментарии|Comments|Reviews|Похожие|Рекомендуем|Читайте также|Смотрите также|Популярное|Теги)/i,\n  /\\d+\\s*отзыв/i,\n  /Оставить отзыв/i,\n  /Войдите чтобы оставить/i\n];\n\nfor (const pattern of cutPatterns) {\n  const match = text.search(pattern);\n  if (match > 500) {\n    text = text.substring(0, match);\n    break;\n  }\n}\n\ntext = text.replace(/\\s+/g, ' ').trim();\n\nconst source = $json;\nconst urlItems = $('Разбиваем URL конкурентов1').all();\nconst urlData = urlItems[$itemIndex]?.json || {};\n\nconsole.log('URL:', $json.url, '| rawText len:', rawText.length, '| final len:', text.length);\n\nreturn {\n  json: {\n    competitor_text: text,\n    url: source.url || '',\n    row_num: source.row_num,\n    h1: urlData.h1 || '',\n    keywords: urlData.keywords || '',\n    neuroanalysis: urlData.neuroanalysis || '',\n    page_type: urlData.page_type || ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        -288
+      ],
+      "id": "66034661-5907-41ce-ac30-3cc03017473d",
+      "name": "Подготовка текста1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let html = '';\nif ($json.body) {\n  html = $json.body;\n} else if ($json.data) {\n  html = $json.data;\n} else if ($json['0'] !== undefined) {\n  html = Object.values($json).join('');\n}\nreturn { json: { html: html } };\n\nconst source = $('Разбиваем URL конкурентов1').item.json;\nreturn {\n  json: {\n    html: $json.data || $json.body || $json.html || '',\n    url: source.url,\n    row_num: source.row_num,\n    h1: source.h1,\n    keywords: source.keywords,\n    neuroanalysis: source.neuroanalysis,\n    page_type: source.page_type\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -464
+      ],
+      "id": "1c24c459-3652-4792-90c7-33417a5cb145",
+      "name": "Собираем HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "let analysisData = {};\ntry {\n  let raw = $json.text || '';\n  raw = raw.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n  analysisData = JSON.parse(raw);\n} catch(e) {}\n\nconst src = $('Собираем блок конкурентов').item.json;\nconst neuroanalysis = src.neuroanalysis || '';\n\nconst recBlock = neuroanalysis.match(/Рекомендации по расширению[:\\s]*\\n([\\s\\S]*?)(?:\\n\\n|Источники|$)/i);\nconst lsiFromNeuro = recBlock\n  ? recBlock[1].split('\\n').map(s => s.trim()).filter(s => s.length > 3)\n  : [];\n\nconst lsiFromCompetitors = (analysisData.top_phrases || []).map(p =>\n  typeof p === 'object' ? p.phrase : p\n).filter(Boolean);\n\nconst allLsi = [...new Set([...lsiFromNeuro, ...lsiFromCompetitors])];\nconst top15 = allLsi.slice(0, 15);\n\nreturn [{\n  json: {\n    ...analysisData,\n    lsi_merged: top15,\n    lsi_from_neuro: lsiFromNeuro,\n    lsi_from_competitors: lsiFromCompetitors,\n    h1: src.h1,\n    keywords: src.keywords,\n    neuroanalysis: neuroanalysis,\n    page_type: src.page_type,\n    volume: src.volume || '',\n    faq: src.faq || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -288
+      ],
+      "id": "405ff880-978e-4232-ab13-71e98245e287",
+      "name": "Объединяем анализ"
+    },
+    {
+      "parameters": {
+        "driveId": "=myDrive",
+        "folderId": "=1uyt5a2JAwVtiNckOja2ameFUuPBarpYq",
+        "title": "=DaOffice - ТЗ: {{ $json.h1 }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -288
+      ],
+      "id": "f1fa29a1-9b5e-44c4-902c-970243fc87cd",
+      "name": "GDoc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        832,
+        -288
+      ],
+      "id": "3626eb7b-b609-40ad-8ca5-14a75c8fce87",
+      "name": "GDoc форматируем",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nconst documentId = $json.documentId;\n\nconst norm = s => (s || '').replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n');\ndata.neuroanalysis = norm(data.neuroanalysis);\ndata.h1 = norm(data.h1);\ndata.page_type = norm(data.page_type);\ndata.tone = norm(data.tone);\ndata.keywords = norm(data.keywords);\nif (data.lsi_merged) data.lsi_merged = data.lsi_merged.map(norm);\n\nconst insertRequests = [];\nconst styleRequests = [];\nlet idx = 1;\n\nfunction ins(text) {\n  const start = idx;\n  insertRequests.push({ insertText: { location: { index: idx }, text } });\n  idx += text.length;\n  return start;\n}\n\nfunction schedBold(start, end) {\n  styleRequests.push({\n    updateTextStyle: {\n      range: { startIndex: start, endIndex: end },\n      textStyle: { bold: true },\n      fields: 'bold'\n    }\n  });\n}\n\nfunction schedHeading(level, start, end) {\n  styleRequests.push({\n    updateParagraphStyle: {\n      range: { startIndex: start, endIndex: end },\n      paragraphStyle: { namedStyleType: level },\n      fields: 'namedStyleType'\n    }\n  });\n}\n\nlet s = ins(`Техническое задание к копирайту для темы \"${data.h1}\"\\n`);\nschedHeading('HEADING_2', s, idx);\nins('\\n');\n\ns = ins('Общая информация\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\nins(`Тип страницы: ${data.page_type}\\n`);\nins(`Рекомендуемый объём: ~${data.avg_volume} символов без пробелов\\n`);\nins(`Тональность: ${data.tone}\\n`);\nins(`H1: ${data.h1}\\n`);\nins('\\n');\n\ns = ins('LSI-фразы\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\nins('LSI-фразы важно употребить в тексте минимум 1-м вхождением с учётом словоформы и морфологии.\\n');\nconst lsiClean = (data.lsi_merged || []).filter(p => !/рекомендации по расширению/i.test(p));\nins(lsiClean.join('; ') + '\\n');\nins('\\n');\n\ns = ins('Топ-фразы конкурентов\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\n(data.top_phrases || []).forEach(p => {\n  const bc = p.by_competitor || {};\n  ins(`${p.phrase}: ${bc['1']||0} / ${bc['2']||0} / ${bc['3']||0} / ${bc['4']||0} -- ${p.avg}\\n`);\n});\nins('\\n');\n\ns = ins('Структура страницы\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\n(data.structure || []).forEach(section => {\n  s = ins(`${section.heading}\\n`);\n  schedBold(s, idx - 1);\n  (section.theses || []).forEach(thesis => {\n    ins(`• ${thesis}\\n`);\n  });\n  ins('\\n');\n});\n\ns = ins('Обязательные блоки контента\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\n(data.common_blocks || []).forEach((block, i) => {\n  ins(`${i+1}. ${block}\\n`);\n});\nins('\\n');\n\ns = ins('Чего нет у конкурентов\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\n(data.content_gaps || []).forEach((gap, i) => {\n  ins(`${i+1}. ${gap}\\n`);\n});\nins('\\n');\n\ns = ins('Нейроанализ\\n');\nschedHeading('HEADING_3', s, idx);\nschedBold(s, idx - 1);\nconst neuro = data.neuroanalysis || '';\nconst parts = neuro.split(/(Шаг \\d+:[^\\n]*|Источники анализа:)/);\nparts.forEach(part => {\n  if (!part) return;\n  if (/^Шаг \\d+:/.test(part.trim()) || /^Источники анализа:/.test(part.trim())) {\n    ins('\\n');\n    s = ins(part.trim() + '\\n');\n    schedBold(s, idx - 1);\n  } else {\n    ins(part);\n  }\n});\n\nconst requests = [...insertRequests, ...styleRequests];\nreturn [{ json: { documentId, requestsJson: JSON.stringify({ requests }) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -288
+      ],
+      "id": "fb8f9d0f-b1f6-4fbd-a5f8-1ae5b330e52f",
+      "name": "Строим batchUpdate"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -768,
+        -576
+      ],
+      "id": "68b9f631-e138-4f86-a327-8baec1980ea2",
+      "name": "Внешний Loop"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst lastRowNum = items[items.length - 1].json.row_num;\nconst filtered = items.filter(i => i.json.row_num === lastRowNum);\nconst withText = filtered.filter(i => \n  i.json.competitor_text && \n  typeof i.json.competitor_text === 'string' &&\n  i.json.competitor_text.length > 50\n);\nconst result = withText.length > 0 ? withText : filtered;\nif (result.length === 0) throw new Error('Нет items для row_num: ' + lastRowNum);\nconst first = result[0].json;\nreturn [{ json: { \n  competitor_text: result.map(i => i.json.competitor_text || ''),\n  url: result.map(i => i.json.url || ''),\n  h1: first.h1,\n  keywords: first.keywords,\n  neuroanalysis: first.neuroanalysis,\n  page_type: first.page_type,\n  row_num: first.row_num\n} }];\n```\n\nВ Update Sheets поле **№ (using to match)**:\n```\n{{ $('Объединяем анализ').first().json.row_num }}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -288
+      ],
+      "id": "427cd356-7890-4376-927c-05d89bc13cbe",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map(item => ({\n  json: {\n    ...($('Объединяем анализ').all()[items.indexOf(item)].json),\n    documentId: item.json.id\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -288
+      ],
+      "id": "59d4bae6-74be-457a-9f4d-871723ec5a5f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $('Разбиваем URL конкурентов1').item.json;\nreturn {\n  json: {\n    html: $json.markdown || $json.data || '',\n    url: source.url,\n    row_num: source.row_num,\n    h1: source.h1,\n    keywords: source.keywords,\n    neuroanalysis: source.neuroanalysis,\n    page_type: source.page_type\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        -720
+      ],
+      "id": "6af31955-e985-4c9a-8763-0031a4039001",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo",
+          "mode": "list",
+          "cachedResultName": "DaOffice.ru - Блог: Темы для статей | Конкуренты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 149505172,
+          "mode": "list",
+          "cachedResultName": "SEO-ТЗ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HVm__6lIggbW8Z_5A9mtfkw59fmL9JRWSkkvTfJKFRo/edit#gid=149505172"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ТЗ": "=https://docs.google.com/document/d/{{ $('GDoc').first().json.id }}/edit",
+            "H1 (главный ключ)": "={{ $('Объединяем анализ').item.json.h1 }}"
+          },
+          "matchingColumns": [
+            "H1 (главный ключ)"
+          ],
+          "schema": [
+            {
+              "id": "№",
+              "displayName": "№",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "H1 (главный ключ)",
+              "displayName": "H1 (главный ключ)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Тип",
+              "displayName": "Тип",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Леммы/Био",
+              "displayName": "Леммы/Био",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ключи",
+              "displayName": "Ключи",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Нейроанализ",
+              "displayName": "Нейроанализ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Конкуренты ТОП-10",
+              "displayName": "Конкуренты ТОП-10",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ТЗ",
+              "displayName": "ТЗ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Копирайт",
+              "displayName": "Копирайт",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "replies",
+              "displayName": "replies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "writeControl",
+              "displayName": "writeControl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "documentId",
+              "displayName": "documentId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        -288
+      ],
+      "id": "1a17bf14-c1a3-4fbf-8d1e-86fa23a351f5",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Запуск вручную": {
+      "main": [
+        [
+          {
+            "node": "Читаем ТЗ из таблицы1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Собираем блок конкурентов": {
+      "main": [
+        [
+          {
+            "node": "LLM — анализ конкурентов",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM — анализ конкурентов",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM — анализ конкурентов": {
+      "main": [
+        [
+          {
+            "node": "Объединяем анализ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем ТЗ из таблицы1": {
+      "main": [
+        [
+          {
+            "node": "Внешний Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбиваем URL конкурентов1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request — парсинг1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request — парсинг1": {
+      "main": [
+        [
+          {
+            "node": "Собираем HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FireCrawl1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown (прямой)1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown (FireCrawl)1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Подготовка текста1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подготовка текста1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Собираем HTML": {
+      "main": [
+        [
+          {
+            "node": "Markdown (прямой)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Объединяем анализ": {
+      "main": [
+        [
+          {
+            "node": "GDoc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GDoc": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Строим batchUpdate": {
+      "main": [
+        [
+          {
+            "node": "GDoc форматируем",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GDoc форматируем": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Внешний Loop": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Разбиваем URL конкурентов1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Собираем блок конкурентов",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Строим batchUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Markdown (FireCrawl)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Внешний Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "62e65f8a-19ac-4658-9542-f6e180561d8f",
+  "activeVersionId": null,
+  "versionCounter": 93,
+  "triggerCount": 0,
+  "tags": [
+    {
+      "updatedAt": "2026-02-24T10:34:25.277Z",
+      "createdAt": "2026-02-24T10:34:25.277Z",
+      "id": "pBAkJJPT8ieIpb93",
+      "name": "text"
+    }
+  ],
+  "shared": [
+    {
+      "updatedAt": "2026-02-23T06:47:49.815Z",
+      "createdAt": "2026-02-23T06:47:49.815Z",
+      "role": "workflow:owner",
+      "workflowId": "Emj6dEmGw1vSL45O",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

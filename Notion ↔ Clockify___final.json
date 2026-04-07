@@ -1,0 +1,711 @@
+{
+  "updatedAt": "2026-03-20T09:19:09.437Z",
+  "createdAt": "2025-10-27T09:07:16.611Z",
+  "id": "DvWQcPhDVgCiWHrP",
+  "name": "Notion ↔ Clockify___final",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "1de96ec6-70e1-81a5-bf84-f9651fe27480",
+          "mode": "list",
+          "cachedResultName": "TASK",
+          "cachedResultUrl": "https://www.notion.so/1de96ec670e181a5bf84f9651fe27480"
+        },
+        "returnAll": true,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "STATUS|status",
+              "condition": "does_not_equal",
+              "statusValue": "Завершено"
+            },
+            {
+              "key": "STATUS|status",
+              "condition": "does_not_equal",
+              "statusValue": "Archived"
+            },
+            {
+              "key": "PRJ|select",
+              "condition": "does_not_equal",
+              "selectValue": "Biznes-Hat"
+            },
+            {
+              "key": "Created time|created_time",
+              "condition": "on_or_after",
+              "createdTimeValue": "2025-10-01T00:00:00"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -992,
+        -80
+      ],
+      "id": "ec2438e4-f4fb-4936-9f6d-466ea0954f9f",
+      "name": "Задачи из Notion",
+      "credentials": {
+        "notionApi": {
+          "id": "hIKXNIltG3eAXNct",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "workspaceId": "=68e89f2b631c3b32396fc00c",
+        "returnAll": true,
+        "additionalFields": {
+          "archived": false
+        }
+      },
+      "type": "n8n-nodes-base.clockify",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        -80
+      ],
+      "id": "d6e4b86c-c6e0-4026-8198-7951f8723e3a",
+      "name": "Проверка/Добавление проектов",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clockifyApi": {
+          "id": "0pillWfiNyi403jm",
+          "name": "Clockify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1168,
+        -80
+      ],
+      "id": "d5b4e179-b062-4d48-8bc6-1895f20fecc8",
+      "name": "Триггер"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionTasks = $('Задачи из Notion').all();\nconst clockifyProjects = $('Проверка/Добавление проектов').all();\n\nconsole.log('=== NOTION TASKS ===', notionTasks.length);\nconsole.log('=== CLOCKIFY PROJECTS ===', clockifyProjects.length);\n\n// Архивные проекты - не создаём\nconst archived = ['Biznes-Hat', 'IvTru11', 'Oboltrade', 'Skyway'];\n\n// Уникальные проекты из Notion\nconst notionProjects = [...new Set(\n  notionTasks.map(t => t.json.property_prj).filter(p => p && !archived.includes(p))\n)];\n\nconsole.log('=== UNIQUE NOTION PROJECTS ===', notionProjects);\n\n// Фильтруем только активные проекты Clockify\nconst activeClockifyProjects = clockifyProjects.filter(p => \n  p.json && p.json.archived === false\n);\n\nconsole.log('=== ACTIVE CLOCKIFY ===', activeClockifyProjects.length);\n\n// Map проектов (название → ID)\nconst clockifyMap = new Map();\nactiveClockifyProjects.forEach(p => {\n  if (p.json && p.json.name && p.json.id) {\n    clockifyMap.set(p.json.name, p.json.id);\n  }\n});\n\nconsole.log('=== PROJECTS IN MAP ===', Array.from(clockifyMap.keys()));\n\n// Находим что создать\nconst toCreate = [];\nnotionProjects.forEach(name => {\n  if (!clockifyMap.has(name)) {\n    toCreate.push({json: {project_name: name}});\n    console.log('🆕 CREATE:', name);\n  } else {\n    console.log('✅ EXISTS:', name);\n  }\n});\n\nif (toCreate.length === 0) {\n  return [{json: {skip: true}}];\n}\n\nreturn toCreate;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        -80
+      ],
+      "id": "68ce9fde-4a12-438a-9cfe-d57f891b91ac",
+      "name": "Анализ проектов",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "workspaceId": "=68e89f2b631c3b32396fc00c",
+        "name": "={{ $json.project_name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.clockify",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -80
+      ],
+      "id": "87e99fc6-7b7c-4ea5-bf08-284869b9f805",
+      "name": "Создаём проекты в Clockify",
+      "retryOnFail": false,
+      "credentials": {
+        "clockifyApi": {
+          "id": "0pillWfiNyi403jm",
+          "name": "Clockify account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionTasks = $('Задачи из Notion').all();\nconst clockifyProjects = $('Все проекты').all();\n\n// Map проектов (название → ID)\nconst projectMap = new Map();\nclockifyProjects.forEach(p => {\n  if (p.json && p.json.name && p.json.id) {\n    projectMap.set(p.json.name, p.json.id);\n  }\n});\n\n// Готовим задачи БЕЗ Clockify_Task_ID для создания\nconst result = [];\n\nnotionTasks.forEach(task => {\n  const projectName = task.json.property_prj;\n  const taskName = task.json.property_name;\n  const notionId = task.json.id;\n  const clockifyTaskId = task.json.property_clockify_task_id;\n  \n  // Пропускаем задачи без проекта\n  if (!projectName) return;\n  \n  // Находим ID проекта\n  const projectId = projectMap.get(projectName);\n  \n  if (!projectId) return;\n  \n  // Создаем ТОЛЬКО задачи БЕЗ ID\n  if (!clockifyTaskId || clockifyTaskId === '') {\n    result.push({\n      json: {\n        notion_id: notionId,\n        task_name: taskName,\n        project_name: projectName,\n        project_id: projectId\n      }\n    });\n  }\n});\n\nreturn result.length > 0 ? result : [{json: {skip: true}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -224
+      ],
+      "id": "1a8e8e7e-c568-4b8e-9e6c-36b150850e7a",
+      "name": "Анализ задач"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "workspaceId": "=68e89f2b631c3b32396fc00c",
+        "returnAll": true,
+        "additionalFields": {
+          "archived": false
+        }
+      },
+      "type": "n8n-nodes-base.clockify",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -80
+      ],
+      "id": "88a7c392-95b6-4e32-89df-630d530c2802",
+      "name": "Все проекты",
+      "credentials": {
+        "clockifyApi": {
+          "id": "0pillWfiNyi403jm",
+          "name": "Clockify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "task",
+        "workspaceId": "=68e89f2b631c3b32396fc00c",
+        "projectId": "={{ $json.project_id }}",
+        "name": "={{ $json.task_name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.clockify",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -224
+      ],
+      "id": "7fccbad3-1820-44cf-8f10-da9dda92dad8",
+      "name": "Создаём задачи в Clockify",
+      "credentials": {
+        "clockifyApi": {
+          "id": "0pillWfiNyi403jm",
+          "name": "Clockify account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.page_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"Clockify_Task_ID\": {\n      \"rich_text\": [\n        {\n          \"text\": {\n            \"content\": \"{{ $json.task_id }}\"\n          }\n        }\n      ]\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        -224
+      ],
+      "id": "08a8e550-9e23-4b00-8809-252e01077bb8",
+      "name": "Сохранить Task ID",
+      "executeOnce": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXLd8XdwEmZyUm0d",
+          "name": "NotionKey"
+        },
+        "notionApi": {
+          "id": "hIKXNIltG3eAXNct",
+          "name": "Notion account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const createdTasks = $input.all();\nconst originalTasks = $('Анализ задач').all();\n\n// ОТЛАДКА\nconsole.log('Created tasks count:', createdTasks.length);\nconsole.log('First created task:', createdTasks[0]);\n\nconst result = [];\n\nfor (let i = 0; i < createdTasks.length; i++) {\n  const created = createdTasks[i].json;\n  \n  console.log(`Task ${i}:`, created);\n  \n  if (!created || !created.id) {\n    console.log(`Skipped task ${i} - no ID`);\n    continue;\n  }\n  \n  const original = originalTasks[i].json;\n  \n  result.push({\n    json: {\n      page_id: original.notion_id,\n      task_id: created.id\n    }\n  });\n}\n\nconsole.log('Result count:', result.length);\n\nif (result.length === 0) {\n  return [{json: {skip: true}}];\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -224
+      ],
+      "id": "1928663e-2583-4ca7-b53e-481ee8eee504",
+      "name": "Объединение данных"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionTasks = $('Задачи из Notion').all();\nconst clockifyTasks = $('Все задачи Clockify').all();\n\nconst validClockifyTasks = clockifyTasks.filter(t => !t.json.error && t.json.id);\n\nconst clockifyMap = new Map();\nvalidClockifyTasks.forEach(t => {\n  clockifyMap.set(t.json.id, t.json);\n});\n\nconst toUpdate = [];\n\nnotionTasks.forEach(task => {\n  const notionName = task.json.property_name;\n  const clockifyId = task.json.property_clockify_task_id;\n  \n  if (!clockifyId) return;\n  \n  const clockifyTask = clockifyMap.get(clockifyId);\n  \n  if (!clockifyTask) return;\n  \n  if (clockifyTask.name !== notionName) {\n    toUpdate.push({\n      json: {\n        task_id: clockifyId,\n        workspace_id: '68e89f2b631c3b32396fc00c',\n        project_id: clockifyTask.projectId,\n        new_name: notionName,\n        old_name: clockifyTask.name\n      }\n    });\n  }\n});\n\nif (toUpdate.length === 0) {\n  return [{ json: { skip: true, message: 'No updates needed' } }];\n}\n\nreturn toUpdate;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -32
+      ],
+      "id": "538fff92-d50f-4e50-8209-e8054b0448ac",
+      "name": "Проверка обновлений"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clockify.me/api/v1/workspaces/{{$json.workspaceId}}/projects/{{$json.id}}/tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        80
+      ],
+      "id": "d2f73ed9-175d-4e6c-a65e-35aad29468f2",
+      "name": "Все задачи Clockify",
+      "executeOnce": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mDGRJLIwDJdEjled",
+          "name": "Header Auth account Clockify&Notion"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.clockify.me/api/v1/workspaces/{{$json.workspace_id}}/projects/{{$json.project_id}}/tasks/{{$json.task_id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"name\": \"{{$json.new_name}}\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        -32
+      ],
+      "id": "b685e5b7-602a-4b2e-a2e1-943c4a7b8fb2",
+      "name": "Именение названия задачи в ClockiFy",
+      "executeOnce": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mDGRJLIwDJdEjled",
+          "name": "Header Auth account Clockify&Notion"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionTasks = $('Задачи из Notion').all();\nconst clockifyTasks = $('Все задачи Clockify').all();\n\nconst notionClockifyIds = new Set();\nnotionTasks.forEach(task => {\n  const clockifyId = task.json.property_clockify_task_id;\n  if (clockifyId) {\n    notionClockifyIds.add(clockifyId);\n  }\n});\n\nconst toDelete = [];\n\nclockifyTasks.forEach(item => {\n  const task = item.json;\n  \n  if (task.id && !notionClockifyIds.has(task.id)) {\n    toDelete.push({\n      json: {\n        task_id: task.id,\n        workspace_id: '68e89f2b631c3b32396fc00c',\n        project_id: task.projectId,\n        task_name: task.name\n      }\n    });\n  }\n});\n\nif (toDelete.length === 0) {\n  return [{ json: { skip: true, message: 'No tasks to delete' } }];\n}\n\nreturn toDelete;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        176
+      ],
+      "id": "6652087c-d2a1-40ae-9cc5-3b798fb7ce02",
+      "name": "Проверка удалённых задач"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.clockify.me/api/v1/workspaces/{{$json.workspace_id}}/projects/{{$json.project_id}}/tasks/{{$json.task_id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"name\": \"{{$json.task_name}}\", \"status\": \"DONE\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        176
+      ],
+      "id": "b3dad5a1-4832-4822-be5a-3f4c26cbade3",
+      "name": "Закрыть задачу (DONE)",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mDGRJLIwDJdEjled",
+          "name": "Header Auth account Clockify&Notion"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://api.clockify.me/api/v1/workspaces/68e89f2b631c3b32396fc00c/projects/{{$json.projectId}}/tasks/{{$json.id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        176
+      ],
+      "id": "a3ead60f-4359-4d09-94bd-35e3a809d966",
+      "name": "Удалить задачу из Clockify",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mDGRJLIwDJdEjled",
+          "name": "Header Auth account Clockify&Notion"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const timeEntries = $input.all();\n\n// Группируем по taskId и суммируем время\nconst taskTimeMap = new Map();\n\ntimeEntries.forEach(entry => {\n  const taskId = entry.json.taskId;\n  \n  // Пропускаем треки без задачи\n  if (!taskId) return;\n  \n  const duration = entry.json.timeInterval.duration;\n  \n  // Конвертируем PT формат в секунды\n  let seconds = 0;\n  const matches = duration.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);\n  if (matches) {\n    const hours = parseInt(matches[1] || 0);\n    const minutes = parseInt(matches[2] || 0);\n    const secs = parseInt(matches[3] || 0);\n    seconds = hours * 3600 + minutes * 60 + secs;\n  }\n  \n  // Суммируем\n  if (taskTimeMap.has(taskId)) {\n    taskTimeMap.set(taskId, taskTimeMap.get(taskId) + seconds);\n  } else {\n    taskTimeMap.set(taskId, seconds);\n  }\n});\n\n// Конвертируем в массив и переводим в минуты\nconst result = [];\ntaskTimeMap.forEach((totalSeconds, taskId) => {\n  const minutes = Math.round(totalSeconds / 60); // округление до целых минут\n  result.push({\n    json: {\n      clockify_task_id: taskId,\n      total_minutes: minutes,\n      total_seconds: totalSeconds\n    }\n  });\n});\n\nif (result.length === 0) {\n  return [{ json: { skip: true, message: 'No time entries with tasks' } }];\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        336
+      ],
+      "id": "6ed20b29-218e-40c3-8397-c4ffe2408bc0",
+      "name": "Сгруппировать время по задачам"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notionTasks = $('Задачи из Notion').all();\nconst clockifyTime = $input.all();\n\nconst result = [];\n\nclockifyTime.forEach(timeEntry => {\n  const clockifyTaskId = timeEntry.json.clockify_task_id;\n  const totalMinutes = timeEntry.json.total_minutes;\n  \n  // Ищем соответствующую задачу в Notion\n  const notionTask = notionTasks.find(t => \n    t.json.property_clockify_task_id === clockifyTaskId\n  );\n  \n  if (notionTask) {\n    result.push({\n      json: {\n        notion_page_id: notionTask.json.id,\n        notion_task_name: notionTask.json.property_name,\n        clockify_task_id: clockifyTaskId,\n        total_minutes: totalMinutes\n      }\n    });\n  }\n});\n\nif (result.length === 0) {\n  return [{ json: { skip: true, message: 'No matching tasks' } }];\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        336
+      ],
+      "id": "13d9402c-122d-46d4-a240-adbb8244909c",
+      "name": "Сопоставить с Notion"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.clockify.me/api/v1/workspaces/68e89f2b631c3b32396fc00c/user/68e89f2b631c3b32396fc012/time-entries",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "page-size",
+              "value": "1000"
+            },
+            {
+              "name": "start",
+              "value": "2024-01-01T00:00:00Z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        336
+      ],
+      "id": "79f297e1-7eb2-45ea-a135-13075ad7212a",
+      "name": "Обновить TRACK в Notion",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mDGRJLIwDJdEjled",
+          "name": "Header Auth account Clockify&Notion"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{$json.notion_page_id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"TRACK\": {\n      \"number\": {{$json.total_minutes}}\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        336
+      ],
+      "id": "53091fea-f672-4724-9121-82519eac2659",
+      "name": "Обновить TRACK в Notion1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "abj4LWDwA7t7wKSV",
+          "name": "Notion API Auth new"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Задачи из Notion": {
+      "main": [
+        [
+          {
+            "node": "Проверка/Добавление проектов",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Обновить TRACK в Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка/Добавление проектов": {
+      "main": [
+        [
+          {
+            "node": "Анализ проектов",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Триггер": {
+      "main": [
+        [
+          {
+            "node": "Задачи из Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Анализ проектов": {
+      "main": [
+        [
+          {
+            "node": "Создаём проекты в Clockify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создаём проекты в Clockify": {
+      "main": [
+        [
+          {
+            "node": "Все проекты",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Все проекты": {
+      "main": [
+        [
+          {
+            "node": "Анализ задач",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Все задачи Clockify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Анализ задач": {
+      "main": [
+        [
+          {
+            "node": "Создаём задачи в Clockify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Создаём задачи в Clockify": {
+      "main": [
+        [
+          {
+            "node": "Объединение данных",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Объединение данных": {
+      "main": [
+        [
+          {
+            "node": "Сохранить Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка обновлений": {
+      "main": [
+        [
+          {
+            "node": "Именение названия задачи в ClockiFy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Все задачи Clockify": {
+      "main": [
+        [
+          {
+            "node": "Проверка обновлений",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Проверка удалённых задач",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка удалённых задач": {
+      "main": [
+        [
+          {
+            "node": "Закрыть задачу (DONE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Закрыть задачу (DONE)": {
+      "main": [
+        [
+          {
+            "node": "Удалить задачу из Clockify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сгруппировать время по задачам": {
+      "main": [
+        [
+          {
+            "node": "Сопоставить с Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обновить TRACK в Notion": {
+      "main": [
+        [
+          {
+            "node": "Сгруппировать время по задачам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сопоставить с Notion": {
+      "main": [
+        [
+          {
+            "node": "Обновить TRACK в Notion1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c4cf1d2f-0083-41e1-a0de-3d577c423dd0",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2025-10-27T09:07:16.616Z",
+      "createdAt": "2025-10-27T09:07:16.616Z",
+      "role": "workflow:owner",
+      "workflowId": "DvWQcPhDVgCiWHrP",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

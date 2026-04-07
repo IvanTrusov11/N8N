@@ -1,0 +1,341 @@
+{
+  "updatedAt": "2026-03-20T09:18:41.611Z",
+  "createdAt": "2025-12-13T10:44:21.765Z",
+  "id": "IGocX06metB0puYh",
+  "name": "Веб-парсинг: (beta)",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const urls = $json[\"URL's\"].split(/\\r?\\n/);\nreturn urls.map(url => ({ json: { url } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        1072
+      ],
+      "id": "cd12a04e-8894-4fa4-a770-acb36f220120",
+      "name": "Разделение URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        1072
+      ],
+      "id": "14ce6ab3-b32a-4483-a26e-fe0aed5180f4",
+      "name": "Первая итерация парсинга",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "h",
+              "cssSelector": "=h1, h2, h3, h4, h5, h6",
+              "skipSelectors": "a",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        976
+      ],
+      "id": "b7e812c3-f58f-4074-a9fc-f1e647f5ea0f",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "data.html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "h",
+              "cssSelector": "=h1, h2, h3, h4, h5, h6",
+              "skipSelectors": "a",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        1168
+      ],
+      "id": "1ce131f2-065b-4671-9e65-8664bed1a4b8",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        1168
+      ],
+      "id": "f4f7109e-1e5e-491a-97d5-2210c37c3125",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "h"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        1072
+      ],
+      "id": "934c29db-c8bf-4163-9027-cbb4e890f9d6",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1552,
+        1072
+      ],
+      "id": "c2b9d6f4-3aab-4af4-bfc0-ca842476dc7b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v2/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer fc-0212389a677f49b7b1cee5d86b196795"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{$json.url }}\",\n  \"formats\": [\n    \"html\"\n  ],\n  \"onlyMainContent\": true,\n  \"excludeTags\": [\n    \"a\",\n    \"script\",\n    \"style\",\n    \"img\",\n    \"svg\",\n    \"png\",\n    \"jpg\",\n    \"jpeg\",\n    \"webp\"\n  ],\n  \"maxAge\": 172800000,\n  \"parsers\": [],\n  \"formats\": [\n    \"html\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        1168
+      ],
+      "id": "10330fc2-5541-43c1-8ed1-943bb3e55be9",
+      "name": "FireCrawl"
+    },
+    {
+      "parameters": {
+        "formTitle": "URL",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "URL's",
+              "fieldType": "textarea",
+              "placeholder": "URLS"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        1072
+      ],
+      "id": "b4b85d18-0ff0-48be-919d-497ffdd0b7df",
+      "name": "On form submission1",
+      "webhookId": "0d45b091-cdad-452b-bf7d-f4ef5c70e5e3"
+    },
+    {
+      "parameters": {
+        "content": "## Парсинг структуры контента по конкурентам\n\n1. Подаём url на вход;\n2. Разделяем URL;\n3. Парсим контент;\n4. Дёргаем HTML;\n5. Мержим;\n6. Агригейт для разъединения.",
+        "height": 320,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        208,
+        736
+      ],
+      "id": "e125b99f-5d69-4056-abb1-6c1a3b48bf56",
+      "name": "Sticky Note"
+    }
+  ],
+  "connections": {
+    "Разделение URL": {
+      "main": [
+        [
+          {
+            "node": "Первая итерация парсинга",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Первая итерация парсинга": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FireCrawl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "Разделение URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "626ea61f-146e-42fe-a42e-cbbd07a4a4b9",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "tags": [
+    {
+      "updatedAt": "2025-12-13T10:46:14.957Z",
+      "createdAt": "2025-12-13T10:46:14.957Z",
+      "id": "f30UL2PCns2yGd2J",
+      "name": "Рабочий"
+    }
+  ],
+  "shared": [
+    {
+      "updatedAt": "2025-12-13T10:44:21.769Z",
+      "createdAt": "2025-12-13T10:44:21.769Z",
+      "role": "workflow:owner",
+      "workflowId": "IGocX06metB0puYh",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

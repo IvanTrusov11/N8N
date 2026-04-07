@@ -1,0 +1,1009 @@
+{
+  "updatedAt": "2026-04-05T21:03:25.478Z",
+  "createdAt": "2026-04-05T19:36:18.282Z",
+  "id": "YNCWewIA778CMhnH",
+  "name": "Сборщик позиций: DaOffice&Конкуренты",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fe5a47d5-b138-4e05-80a5-a629dd055f26",
+      "name": "Запуск",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2864,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "SPREADSHEET_ID",
+              "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "INPUT_SHEET",
+              "value": "ALL",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "MAIN_SHEET",
+              "value": "ALL",
+              "type": "string"
+            },
+            {
+              "id": "c4",
+              "name": "YA_SHEET",
+              "value": "Яндекс",
+              "type": "string"
+            },
+            {
+              "id": "c5",
+              "name": "G_SHEET",
+              "value": "Google",
+              "type": "string"
+            },
+            {
+              "id": "c6",
+              "name": "XMLSTOCK_USER",
+              "value": "13817",
+              "type": "string"
+            },
+            {
+              "id": "c7",
+              "name": "XMLSTOCK_KEY",
+              "value": "1430e4ccaebeb27eb65213e93a12ee7c",
+              "type": "string"
+            },
+            {
+              "id": "c8",
+              "name": "YANDEX_REGION",
+              "value": "213",
+              "type": "string"
+            },
+            {
+              "id": "c9",
+              "name": "DELAY_MS",
+              "value": 1500,
+              "type": "number"
+            },
+            {
+              "id": "d8db4c9d-dd66-43ca-89e2-08ba52865d6a",
+              "name": "COMPETITORS_SHEET",
+              "value": "Конкуренты",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "45516d89-8dcc-440e-8ebd-a14c8215313f",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2704,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+          "mode": "list",
+          "cachedResultName": "Daoffice.ru - Съём позиций",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ALL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "666d4faf-e19b-4dda-8aa8-e866e81cf9b1",
+      "name": "Читаем ключи",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2544,
+        912
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+          "mode": "list",
+          "cachedResultName": "Daoffice.ru - Съём позиций",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 67860148,
+          "mode": "list",
+          "cachedResultName": "Яндекс",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit#gid=67860148"
+        },
+        "options": {}
+      },
+      "id": "80c6cfd7-9ac3-454b-864f-7ad23b2b45c2",
+      "name": "Читаем Яндекс",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2192,
+        912
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+          "mode": "list",
+          "cachedResultName": "Daoffice.ru - Съём позиций",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 190013517,
+          "mode": "list",
+          "cachedResultName": "Google",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit#gid=190013517"
+        },
+        "options": {}
+      },
+      "id": "2b77481e-a9bd-4dde-95e0-24cb6a573e0c",
+      "name": "Читаем Google",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2000,
+        912
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+          "mode": "list",
+          "cachedResultName": "Daoffice.ru - Съём позиций",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ALL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "63301ed6-b8d2-48e8-9230-0217b966cae2",
+      "name": "Читаем ALL",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2368,
+        912
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst DOMAIN = 'daoffice.ru';\n\nconst now = new Date();\nconst dd  = String(now.getDate()).padStart(2, '0');\nconst mm  = String(now.getMonth() + 1).padStart(2, '0');\nconst dateStr = `${dd}.${mm}`;\n\nfunction colLetter(n) {\n  let r = '';\n  while (n > 0) {\n    n--;\n    r = String.fromCharCode(65 + (n % 26)) + r;\n    n = Math.floor(n / 26);\n  }\n  return r;\n}\n\nconst allRows = $('Читаем ALL').all();\nconst allKeys = allRows.length > 0\n  ? Object.keys(allRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number')\n  : [];\nlet allColCount = Math.max(allKeys.length, 2);\n\nconst todayYaHeader = `Я ${dateStr}`;\nlet mainYaCol, mainGCol;\nlet isResume = false;\n\nif (allKeys.includes(todayYaHeader)) {\n  const colIndex = allKeys.indexOf(todayYaHeader);\n  mainYaCol = colLetter(colIndex + 1);\n  mainGCol  = colLetter(colIndex + 2);\n  isResume = true;\n} else {\n  mainYaCol = colLetter(allColCount + 1);\n  mainGCol  = colLetter(allColCount + 2);\n}\n\nconst filledRows = new Set();\nif (isResume) {\n  for (const row of allRows) {\n    const val = row.json[todayYaHeader];\n    if (val !== undefined && val !== null && val !== '') {\n      filledRows.add(String(row.json['row_number']));\n    }\n  }\n}\n\nconst yaRows = $('Читаем Яндекс').all();\nlet yaColCount = 2;\nif (yaRows.length > 0) {\n  const keys = Object.keys(yaRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number');\n  yaColCount = Math.max(keys.length, 2);\n}\nconst yaNextCol = isResume ? mainYaCol : colLetter(yaColCount + 1);\n\nconst gRows = $('Читаем Google').all();\nlet gColCount = 2;\nif (gRows.length > 0) {\n  const keys = Object.keys(gRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number');\n  gColCount = Math.max(keys.length, 2);\n}\nconst gNextCol = isResume ? mainGCol : colLetter(gColCount + 1);\n\n// Конкуренты\nconst competitorDomains = $('Читаем конкуренты').all()\n  .map(i => (i.json['домен'] || '').trim())\n  .filter(Boolean);\n\nconst batchResp = $('HTTP Request').first().json;\nconst valueRanges = batchResp.valueRanges || [];\n\nconst competitorCols = {};\nfor (let i = 0; i < competitorDomains.length; i++) {\n  const domain = competitorDomains[i];\n  const range = valueRanges[i];\n  const headers = (range && range.values && range.values[0]) ? range.values[0] : [];\n  const colCount = Math.max(headers.length, 2);\n  const todayCompHeader = `Я ${dateStr}`;\n  if (headers.includes(todayCompHeader)) {\n    const colIndex = headers.indexOf(todayCompHeader);\n    competitorCols[domain] = {\n      yaCol: colLetter(colIndex + 1),\n      gCol:  colLetter(colIndex + 2),\n    };\n  } else {\n    competitorCols[domain] = {\n      yaCol: colLetter(colCount + 1),\n      gCol:  colLetter(colCount + 2),\n    };\n  }\n}\n\nconst isFirstRun = allRows.length === 0;\nconst inputRows = $('Читаем ключи').all();\nconst results = [];\n\nfor (const item of inputRows) {\n  const kw = (item.json['Ключевой запрос'] || '').trim();\n  if (!kw) continue;\n  if (kw === 'Ключевой запрос') continue;\n\n  const demandVal = item.json['Спрос'];\n  const looksLikeDomain = kw.includes('.') && (kw.includes('.ru') || kw.includes('.рф') || kw.includes('.com'));\n  if (looksLikeDomain && (!demandVal || demandVal === '')) continue;\n\n  if (isResume && filledRows.has(String(item.json['row_number']))) continue;\n\n  results.push({\n    keyword:        kw,\n    demand:         demandVal || '',\n    rowNum:         item.json['row_number'],\n    domain:         DOMAIN,\n    dateStr,\n    mainYaCol,      mainGCol,\n    yaNextCol,      gNextCol,\n    competitors:    competitorDomains,\n    competitorCols,\n    isFirstRun,\n    yaUrl: `https://xmlstock.com/yandex/xml/?user=${cfg.XMLSTOCK_USER}&key=${cfg.XMLSTOCK_KEY}&query=${encodeURIComponent(kw)}&lr=${cfg.YANDEX_REGION}&groupby=100`,\n    gUrl:  `https://xmlstock.com/google/xml/?user=${cfg.XMLSTOCK_USER}&key=${cfg.XMLSTOCK_KEY}&query=${encodeURIComponent(kw)}&lr=ru&num=100&hl=ru`\n  });\n}\n\nreturn results.map(r => ({ json: r }));"
+      },
+      "id": "d9518549-d756-4d0e-9225-9e7b92d03bb8",
+      "name": "Prepare Keywords",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2864,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2192,
+        1136
+      ],
+      "id": "b3668b30-5c1c-4c9e-b4cc-d8ba14438b5a",
+      "name": "Split"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Split').item.json.yaUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2000,
+        1136
+      ],
+      "id": "8b584da6-79a0-40f4-a10a-4c8b4b6d3c98",
+      "name": "HTTP Яндекс",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Split').item.json.gUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2000,
+        1360
+      ],
+      "id": "9d49a59f-5f60-4618-8828-bfd23785c800",
+      "name": "HTTP Google",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function punycodeEncode(str) {\n  const base=36,tmin=1,tmax=26,skew=38,damp=700,initialBias=72,initialN=128;\n  const codePoints=Array.from(str).map(c=>c.codePointAt(0));\n  const basic=codePoints.filter(cp=>cp<128);\n  let handled=basic.length;\n  const output=basic.map(cp=>String.fromCodePoint(cp));\n  if(handled>0)output.push('-');\n  function adapt(delta,numPoints,first){delta=first?Math.floor(delta/damp):delta>>1;delta+=Math.floor(delta/numPoints);let k=0;while(delta>Math.floor(((base-tmin)*tmax)/2)){delta=Math.floor(delta/(base-tmin));k+=base;}return k+Math.floor(((base-tmin+1)*delta)/(delta+skew));}\n  function dig(d){return d+22+75*(d<26?1:0);}\n  let n=initialN,delta=0,bias=initialBias;\n  while(handled<codePoints.length){\n    const m=Math.min(...codePoints.filter(cp=>cp>=n));\n    delta+=(m-n)*(handled+1);n=m;\n    for(const cp of codePoints){\n      if(cp<n)delta++;\n      if(cp===n){let q=delta;for(let k=base;;k+=base){const t=k<=bias?tmin:k>=bias+tmax?tmax:k-bias;if(q<t)break;output.push(String.fromCodePoint(dig(t+(q-t)%(base-t))));q=Math.floor((q-t)/(base-t));}output.push(String.fromCodePoint(dig(q)));bias=adapt(delta,handled+1,handled===basic.length);delta=0;handled++;}\n    }\n    delta++;n++;\n  }\n  return output.join('');\n}\n\nfunction domainToASCII(domain) {\n  return domain.split('.').map(label=>\n    /[^\\x00-\\x7F]/.test(label)?'xn--'+punycodeEncode(label):label\n  ).join('.');\n}\n\nfunction parseXml(xmlStr, domain) {\n  if (!xmlStr || typeof xmlStr !== 'string') return { pos: null, url: null };\n  const docs = xmlStr.match(/<doc[\\s\\S]*?<\\/doc>/g) || [];\n  const domainLow  = domain.toLowerCase();\n  const domainPuny = domainToASCII(domain).toLowerCase();\n  for (let j = 0; j < docs.length; j++) {\n    const um = docs[j].match(/<url[^>]*>([^<]+)<\\/url>/);\n    if (!um) continue;\n    const urlLow = um[1].toLowerCase();\n    if (urlLow.includes(domainLow) || urlLow.includes(domainPuny)) {\n      return { pos: j + 1, url: um[1].trim() };\n    }\n  }\n  return { pos: null, url: null };\n}\n\nconst meta  = $('Split').item.json;\nconst yaXml = $('HTTP Яндекс').first().json.data || '';\nconst gXml  = $('HTTP Google').first().json.data || '';\n\nconst ya210 = yaXml.includes('code=\"210\"') || yaXml.includes('code=\"202\"');\nconst g210  = gXml.includes('code=\"210\"')  || gXml.includes('code=\"202\"');\n\n// DEBUG — собираем все коды ошибок\nconst yaErrors = (yaXml.match(/code=\"(\\d+)\"/g) || []);\nconst gErrors  = (gXml.match(/code=\"(\\d+)\"/g) || []);\n\nconst parsedY  = parseXml(yaXml, meta.domain);\nconst parsedG  = parseXml(gXml,  meta.domain);\nconst parsedSY = meta.satellite ? parseXml(yaXml, meta.satellite) : { pos: null, url: null };\nconst parsedSG = meta.satellite ? parseXml(gXml,  meta.satellite) : { pos: null, url: null };\n\nreturn {\n  keyword: meta.keyword, demand: meta.demand, rowNum: meta.rowNum,\n  domain: meta.domain, satellite: meta.satellite, dateStr: meta.dateStr,\n  mainYaCol: meta.mainYaCol, mainGCol: meta.mainGCol,\n  mainSatYaCol: meta.mainSatYaCol, mainSatGCol: meta.mainSatGCol,\n  yaNextCol: meta.yaNextCol, gNextCol: meta.gNextCol,\n  yaNextColS: meta.yaNextColS, gNextColS: meta.gNextColS,\n  isFirstRun: meta.isFirstRun,\n  ya210, g210,\n  yPos: parsedY.pos, yUrl: parsedY.url,\n  gPos: parsedG.pos, gUrl: parsedG.url,\n  syPos: parsedSY.pos, syUrl: parsedSY.url,\n  sgPos: parsedSG.pos, sgUrl: parsedSG.url,\n  _yaErrors: yaErrors,\n  _gErrors:  gErrors,\n};"
+      },
+      "id": "59693b7e-f65f-4464-b6b5-5cc06ad7c90c",
+      "name": "Parse Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        1616
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const r   = $('Parse Results').first().json;\nconst cfg = $('Config').first().json;\nconst data = [];\n\nconst yVal = r.yPos ? `=HYPERLINK(\"${r.yUrl}\";\"${r.yPos}\")` : (r.ya210 ? '210' : '—');\nconst gVal = r.gPos ? `=HYPERLINK(\"${r.gUrl}\";\"${r.gPos}\")` : (r.g210  ? '210' : '—');\n\ndata.push({ range: `${cfg.MAIN_SHEET}!${r.mainYaCol}${r.rowNum}`, values: [[yVal]] });\ndata.push({ range: `${cfg.MAIN_SHEET}!${r.mainGCol}${r.rowNum}`,  values: [[gVal]] });\n\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data } } }];"
+      },
+      "id": "07996b3d-b2d3-4f4e-92f8-761991079ac1",
+      "name": "Body Main1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2000,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Parse Results').first().json;\nconst cfg = $('Config').first().json;\nconst val = r.yPos ? `=HYPERLINK(\"${r.yUrl}\";\"${r.yPos}\")` : (r.ya210 ? '210' : '—');\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data: [\n  { range: `${cfg.YA_SHEET}!${r.yaNextCol}${r.rowNum}`, values: [[val]] }\n] } } }];"
+      },
+      "id": "fe8d7de5-e221-4ddf-99b0-623b92e0b2b7",
+      "name": "Body Яндекс1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1584,
+        1616
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Parse Results').first().json;\nconst cfg = $('Config').first().json;\nconst val = r.gPos ? `=HYPERLINK(\"${r.gUrl}\";\"${r.gPos}\")` : (r.g210 ? '210' : '—');\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data: [\n  { range: `${cfg.G_SHEET}!${r.gNextCol}${r.rowNum}`, values: [[val]] }\n] } } }];"
+      },
+      "id": "1c725977-51e2-4b2f-ae39-38a401797101",
+      "name": "Body Google1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        1824
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "02d7736c-31fc-4097-9b74-bceee0d4de2e",
+      "name": "Write Main1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1776,
+        1616
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "8c39ac82-59f7-471d-8262-6f61bb9cd93b",
+      "name": "Write Яндекс1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1392,
+        1616
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "2e799e36-88f4-4246-b98a-9495ee28510c",
+      "name": "Write Google1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2000,
+        1824
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg     = $('Config').first().json;\nconst results = $('Prepare Keywords').all().map(i => i.json);\nif (!results.length) return $input.all();\n\nconst r    = results[0];\nconst date = r.dateStr;\nconst data = [];\n\ndata.push({ range: `${cfg.MAIN_SHEET}!${r.mainYaCol}1`, values: [[`Я ${date}`]] });\ndata.push({ range: `${cfg.MAIN_SHEET}!${r.mainGCol}1`,  values: [[`G ${date}`]] });\ndata.push({ range: `${cfg.YA_SHEET}!${r.yaNextCol}1`,   values: [[date]] });\ndata.push({ range: `${cfg.G_SHEET}!${r.gNextCol}1`,     values: [[date]] });\n\nfor (const comp of (r.competitors || [])) {\n  const cols = r.competitorCols[comp];\n  if (!cols) continue;\n  data.push({ range: `'${comp}'!${cols.yaCol}1`, values: [[`Я ${date}`]] });\n  data.push({ range: `'${comp}'!${cols.gCol}1`,  values: [[`G ${date}`]] });\n}\n\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data } } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2704,
+        1136
+      ],
+      "id": "55c514b8-bb2a-48d3-a813-727c97156c1b",
+      "name": "Write Headers"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2544,
+        1136
+      ],
+      "id": "1b4863d5-4cdc-4375-9942-5e88adaf0b5e",
+      "name": "Write (batchUpdate)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Prepare Keywords').all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2368,
+        1136
+      ],
+      "id": "c491e2cb-aa62-438d-9a8f-a4093a563f5c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1568,
+        1120
+      ],
+      "id": "eb92cebb-6075-4723-b59f-df18b1d8cc9d",
+      "name": "Wait",
+      "webhookId": "7af56e03-b7ce-4d8e-b22c-8e230c9d1b66"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5a62f5cc-46d7-4109-bccd-c6b67265a1f6",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "code=\"210\"",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "667f6c41-81d1-483d-98a7-4bc73b57f8ad",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "code=\"202\"",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1776,
+        1136
+      ],
+      "id": "c52e457f-7665-48a4-bdc0-6bd938144ea5",
+      "name": "If 210 Яндекс"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e0bf67d0-9a7d-4013-ae22-ac77fa91e5d7",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "code=\"210\"",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "b9c0e6e6-1212-4ea9-975e-221397ca8c65",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "code=\"202\"",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1776,
+        1360
+      ],
+      "id": "ea4cebd5-dad8-4e57-8dd4-42d131708ca5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1568,
+        1344
+      ],
+      "id": "11b93c7c-81d7-449e-8ace-ad1c3b8bf77e",
+      "name": "Wait1",
+      "webhookId": "8d484b4f-81d6-4f62-8f6f-1ec74f75336e"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1776,
+        1824
+      ],
+      "id": "470cd6c3-458a-483a-ae33-903fd05489d1",
+      "name": "Wait2",
+      "webhookId": "aa8687be-dbb3-4e2d-9a6b-eb8710052425"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchGet?' + $('Читаем конкуренты').all().map(i => 'ranges=' + encodeURIComponent(\"'\" + (i.json['домен'] || '') + \"'!1:1\")).join('&') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1584,
+        912
+      ],
+      "id": "0129a9d5-d4bf-4671-8baf-744258cb83b4",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs",
+          "mode": "list",
+          "cachedResultName": "Daoffice.ru - Съём позиций",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 813772381,
+          "mode": "list",
+          "cachedResultName": "Конкуренты",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1kN6Og0YrqQ00pRydQllEFRcKqJ1OKZf5p9cUiHoezJs/edit#gid=813772381"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1792,
+        912
+      ],
+      "id": "86416e3a-2648-4c9e-be00-c9f7fd91e412",
+      "name": "Читаем конкуренты",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Запуск": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Читаем ключи",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем ключи": {
+      "main": [
+        [
+          {
+            "node": "Читаем ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Яндекс": {
+      "main": [
+        [
+          {
+            "node": "Читаем Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Google": {
+      "main": [
+        [
+          {
+            "node": "Читаем конкуренты",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем ALL": {
+      "main": [
+        [
+          {
+            "node": "Читаем Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Keywords": {
+      "main": [
+        [
+          {
+            "node": "Write Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "HTTP Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Яндекс": {
+      "main": [
+        [
+          {
+            "node": "If 210 Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Google": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Results": {
+      "main": [
+        [
+          {
+            "node": "Body Main1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Main1": {
+      "main": [
+        [
+          {
+            "node": "Write Main1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Яндекс1": {
+      "main": [
+        [
+          {
+            "node": "Write Яндекс1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Google1": {
+      "main": [
+        [
+          {
+            "node": "Write Google1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Headers": {
+      "main": [
+        [
+          {
+            "node": "Write (batchUpdate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Main1": {
+      "main": [
+        [
+          {
+            "node": "Body Яндекс1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Яндекс1": {
+      "main": [
+        [
+          {
+            "node": "Body Google1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Google1": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write (batchUpdate)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If 210 Яндекс": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Prepare Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем конкуренты": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d004b523-8f00-4616-8a58-d6dcaad04844",
+  "activeVersionId": null,
+  "versionCounter": 102,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T19:36:18.287Z",
+      "createdAt": "2026-04-05T19:36:18.287Z",
+      "role": "workflow:owner",
+      "workflowId": "YNCWewIA778CMhnH",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "updatedAt": "2025-10-25T09:04:42.000Z",
+  "createdAt": "2025-10-17T11:47:20.730Z",
+  "id": "Wx1g4PeulI1hTuZT",
+  "name": "Notion&G.Calendar V2",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1520,
+        -112
+      ],
+      "id": "88455ca7-5bb1-4ddc-b3ef-92d5203a0960",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "cachedResultName": "1. Kurort-Expert",
+          "mode": "list",
+          "__rl": true,
+          "value": "6a2077fd8349578291b1577786fe74285335bac947af9f0975e91df53be4379d@group.calendar.google.com"
+        },
+        "timeMin": "={{ $now.minus({ months: 3 }).startOf('day').toISO() }}",
+        "timeMax": "={{ $now.plus({ years: 1 }).endOf('day').toISO() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1296,
+        -112
+      ],
+      "id": "5806b9ca-cf42-4981-8d08-b6249c149754",
+      "name": "Получаем события",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RB4ftPy52hf84ldN",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "value": "1de96ec670e181a5bf84f9651fe27480",
+          "mode": "id",
+          "__rl": true
+        },
+        "limit": 20,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "DATE",
+              "type": "date",
+              "condition": "is_not_empty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -1072,
+        -112
+      ],
+      "id": "c3a0eecd-2ed8-4818-9632-72a408b4c271",
+      "name": "Получаем задачи",
+      "credentials": {
+        "notionApi": {
+          "id": "hIKXNIltG3eAXNct",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Получаем задачу\nconst task = $input.item.json;\n\n// Словарь проектов → календари\nconst PROJECT_TO_CALENDAR = {\n  \"Kurort-Expert\": \"6a2077fd8349578291b1577786fe74285335bac947af9f0975e91df53be4379d@group.calendar.google.com\",\n  \"RcReation\": \"1281f932c7f59f433e9c9577828e0dfd71eb0e6e3989711f392b26fa1abacdd5@group.calendar.google.com\",\n  \"DaOffice\": \"b9ccb71fcca4d2c1c238e2c24fd9a6d6ca5446f47345c914577da37105e4dd4a@group.calendar.google.com\",\n  \"SkyWay\": \"4d2ec315ab96d62d832c862f77d9fa07ebcda3c82ab17a880116fb0fbd23bc35@group.calendar.google.com\",\n  \"MRT-Чехов\": \"d2fd83447dafbf98d137f6f8b330aebf0774e5f0ca19d3a04559621dd1332754@group.calendar.google.com\",\n  \"МРТ-Домодедово\": \"c3f1c207199e76d3abded641a67b8243830d53f69ca807719397f8ba9cedabfb@group.calendar.google.com\",\n  \"КТ-Домодедово\": \"c301b9f111419f95804a4174f8b629e5fd5f4699af35141c7c6a8f1761f2bf60@group.calendar.google.com\",\n  \"Biznes-Hat\": \"1eb84f74d7fffaeacd18e6858881c12c5b477295c638d613b2dbb594bbd1581d@group.calendar.google.com\",\n  \"Parket-Step\": \"56bc9d22c56ec05ec1e6b093cd30196a0701957eeab6a3441b9d7c5d907fb944@group.calendar.google.com\"\n};\n\n// Извлекаем данные задачи\nconst title = task.property_name || 'Без названия';\nconst dueDate = task.property_date?.start || task.property_date?.end;\n\nif (!dueDate) {\n  return null; // Пропускаем задачи без даты\n}\n\n// Обрабатываем время\nlet startTime, endTime;\nif (dueDate.includes('T')) {\n  startTime = new Date(dueDate);\n  endTime = new Date(startTime.getTime() + 3600000);\n} else {\n  startTime = new Date(dueDate + 'T09:00:00');\n  endTime = new Date(dueDate + 'T10:00:00');\n}\n\n// Определяем проект\nconst projectName = task.property_prj || 'Kurort-Expert';\nconst calendarId = PROJECT_TO_CALENDAR[projectName];\n\n// Формируем описание\nconst description = task.property_task || '';\nconst tag = `[NotionTaskId:${task.id}]`;\nconst fullDescription = `${description}\\n\\n${tag}\\n\\nURL: ${task.url}`;\n\n// Возвращаем обработанные данные\nreturn {\n  notionId: task.id,\n  title: title,\n  startTime: startTime.toISOString(),\n  endTime: endTime.toISOString(),\n  description: fullDescription,\n  calendarId: calendarId,\n  tag: tag\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        -112
+      ],
+      "id": "956e310b-9055-434e-88b9-1e5acbcab88c",
+      "name": "Обработка задач"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Получаем текущую задачу\nconst task = $input.item.json;\n\n// Получаем ВСЕ события из календаря\nconst allEvents = $('Получаем события').all();\n\n// Ищем событие с тегом этой задачи\nconst existingEvent = allEvents.find(event => {\n  const description = event.json.description || '';\n  return description.includes(task.tag);\n});\n\n// Если событие найдено\nif (existingEvent) {\n  const expectedStart = new Date(task.startTime).getTime();\n  const actualStart = new Date(existingEvent.json.start.dateTime).getTime();\n  \n  if (expectedStart === actualStart) {\n    // Время не изменилось - ПРОПУСКАЕМ\n    return {\n      ...task,\n      action: 'skip'\n    };\n  } else {\n    // Время изменилось - ОБНОВЛЯЕМ\n    return {\n      ...task,\n      action: 'update',\n      eventId: existingEvent.json.id\n    };\n  }\n}\n\n// Событие не найдено - СОЗДАЁМ\nreturn { ...task, action: 'create' };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        -112
+      ],
+      "id": "6e6dd8ba-dbc3-4709-ace5-fe5830871317",
+      "name": "Определяем действия",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "create",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9b065609-421f-4a1c-abf0-1acde9cf7067"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e2233222-c541-4b2d-928c-56e5f1d3beec",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "update",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2c1b1ae8-dc0d-4e67-ae32-4aa6acc89d93",
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "skip",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -480,
+        -128
+      ],
+      "id": "865d214b-853d-4d72-b6c4-685ba2f2db25",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "value": "={{ $json.calendarId }}",
+          "mode": "id"
+        },
+        "start": "={{ $json.startTime }}",
+        "end": "={{ $json.endTime }}",
+        "additionalFields": {
+          "description": "={{ $json.description }}",
+          "summary": "={{ $json.title }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        -320
+      ],
+      "id": "736b7d91-6671-40be-9b3c-0f5b021afab1",
+      "name": "Создаём событие",
+      "executeOnce": false,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RB4ftPy52hf84ldN",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "mode": "id",
+          "value": "={{ $json.calendarId }}"
+        },
+        "eventId": "={{ $json.eventId }}",
+        "updateFields": {
+          "allday": "no",
+          "color": "",
+          "description": "={{ $json.description }}",
+          "end": "={{ $json.endTime }}",
+          "guestsCanInviteOthers": true,
+          "guestsCanModify": false,
+          "guestsCanSeeOtherGuests": true,
+          "id": "",
+          "location": "",
+          "maxAttendees": 0,
+          "repeatFrecuency": "",
+          "repeatHowManyTimes": 1,
+          "repeatUntil": "",
+          "rrule": "",
+          "sendUpdates": "",
+          "showMeAs": "opaque",
+          "start": "={{ $json.startTime }}",
+          "summary": "={{ $json.title }}",
+          "visibility": "default"
+        }
+      },
+      "position": [
+        -16,
+        -112
+      ],
+      "name": "Обновляем событие",
+      "type": "n8n-nodes-base.googleCalendar",
+      "id": "generated-4fa7d9ca-ec51-4297-ab2a-8ff86e24921a"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -272,
+        -240
+      ],
+      "id": "aeb38cff-904d-47f4-aa06-086f6d203883",
+      "name": "Wait",
+      "webhookId": "2415ca0a-9a71-4cf1-a180-541110da1bde"
+    },
+    {
+      "parameters": {
+        "content": "## Оптимизация обработки задач\n\nЭтот узел `NoOp` (No Operation) добавлен для обработки задач, которые уже существуют в Google Calendar и не требуют обновления.\n\nКогда узел \"Определяем действия\" определяет, что задача Notion уже имеет соответствующее событие в Google Calendar с неизменным временем (`action: \"skip\"`), эти элементы направляются сюда и не вызывают никаких дальнейших действий. Это помогает избежать ненужных запросов к Google Calendar и предотвращает ошибки, связанные с лимитами API или таймаутами.",
+        "height": 240,
+        "width": 360,
+        "color": 4
+      },
+      "name": "Пояснение к оптимизации",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -704,
+        -496
+      ],
+      "id": "generated-382e9fa8-d994-4160-907c-6084e33f4659"
+    },
+    {
+      "parameters": {},
+      "position": [
+        -272,
+        80
+      ],
+      "type": "n8n-nodes-base.noOp",
+      "name": "Пропускаем",
+      "id": "generated-ce21d726-1389-4fee-b631-0e54f4f07188"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Получаем события",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получаем события": {
+      "main": [
+        [
+          {
+            "node": "Получаем задачи",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получаем задачи": {
+      "main": [
+        [
+          {
+            "node": "Обработка задач",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Обработка задач": {
+      "main": [
+        [
+          {
+            "node": "Определяем действия",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Определяем действия": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Обновляем событие",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Пропускаем",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Создаём событие",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "7f88d986-6d12-47db-af0e-f14f96daf0de",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2025-10-17T11:47:20.735Z",
+      "createdAt": "2025-10-17T11:47:20.735Z",
+      "role": "workflow:owner",
+      "workflowId": "Wx1g4PeulI1hTuZT",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

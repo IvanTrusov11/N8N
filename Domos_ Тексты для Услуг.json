@@ -1,0 +1,322 @@
+{
+  "updatedAt": "2026-03-12T10:53:43.000Z",
+  "createdAt": "2026-03-12T10:53:43.916Z",
+  "id": "qXGQl2f0GxX4rB14",
+  "name": "Domos: Тексты для Услуг",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        96,
+        528
+      ],
+      "id": "f939309c-ecec-4c01-969f-dcdfc6907397",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI",
+          "mode": "list",
+          "cachedResultName": "MarketGranit.ru - Описание карточек товара",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Описание"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        320,
+        528
+      ],
+      "id": "5e089f75-ef5d-46de-ae89-1fabb6fccdf5",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Напиши мне описание товара {{ $json.H1 }} с характеристиками:\n{{ $json['Характеристики'] }}\n{{ $json['Хлебные крошки'] }}\n\nВажно: описание товаров должно быть не более 500 символов. это примерно 500 токенов. ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        768,
+        400
+      ],
+      "id": "ff79db2d-d8c9-432c-87be-e8ad35a70beb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI",
+          "mode": "list",
+          "cachedResultName": "MarketGranit.ru - Описание карточек товара",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/138vy9bYKeFIij8_RMdQoXMhgQYevN35rqVwkyZ8P2EI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "H1",
+              "displayName": "H1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Характеристики",
+              "displayName": "Характеристики",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Хлебные крошки",
+              "displayName": "Хлебные крошки",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Описание",
+              "displayName": "Описание",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        528
+      ],
+      "id": "db40df07-b2bf-4971-909a-76ea51afcce0",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        544,
+        528
+      ],
+      "id": "ce36d796-f5c0-428c-a293-61da1b109d8a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        768,
+        768
+      ],
+      "id": "2a72faff-a9e4-4fc8-9a98-2860e0eefa18",
+      "name": "Claude",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        768,
+        592
+      ],
+      "id": "3c6667fe-716f-40cc-a3b4-0f58578aaba0",
+      "name": "Free",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fGthAQoE0jOmscoH",
+          "name": "Google Gemini_№1"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Free": {
+      "ai_languageModel": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "c7d4d52b-36e6-4e46-8d3a-027e50836593",
+  "activeVersionId": null,
+  "versionCounter": 19,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-12T10:53:43.925Z",
+      "createdAt": "2026-03-12T10:53:43.925Z",
+      "role": "workflow:owner",
+      "workflowId": "qXGQl2f0GxX4rB14",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

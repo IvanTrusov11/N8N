@@ -1,0 +1,408 @@
+{
+  "updatedAt": "2026-03-26T05:44:14.761Z",
+  "createdAt": "2026-03-03T04:10:13.420Z",
+  "id": "yZrEjRXaDqUAW5i4",
+  "name": "FAQ-рерайт: Порталы",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        48
+      ],
+      "id": "65b0fff1-c46c-488e-8b97-239b7d3abfca",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - FAQ/рерайт для Порталов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2110713410,
+          "mode": "list",
+          "cachedResultName": "Лист2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q/edit#gid=2110713410"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Рерайт (Вопрос)"
+            },
+            {
+              "lookupColumn": "Рерайт (Вопрос-Ответ)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -672,
+        48
+      ],
+      "id": "ddd37b94-f956-4e78-8ead-e98269bb0713",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — SEO-копирайтер медицинского туристического портала. Твоя задача: сделать уникальный рерайт вопроса и ответа для конкретного ГЕО-портала (страница раздела/каталога, на которой представлены карточки отелей и санаториев), чтобы контент не дублировался на других страницах сайта.\nВажно делать так, чтобы соблюдалась и seo-оптимизация. Важно писать уникальность на 100% - для основы у тебя есть текст конкурента. Можно осуществить рерайт с небольшим копирайтом.\n\nВажно: Объём контента по ОТВЕТАМ должен быть + - такой же, как в исходнике.\nВ исходнике - вопрос ответы конкурентов, потому и переписываем.\n\nОБЪЕКТ: {{ $json['Объект (H1)'] }}\n\nИСХОДНЫЙ ВОПРОС:\n{{ $json['Вопрос'] }}\n\nИСХОДНЫЙ ОТВЕТ:\n{{ $json['Ответ'] }}\n\nДУБЛЬ ВОПРОСА (НА ДРУГИХ СТРАНИЦАХ СТОИТ ТАК):\n{{ $json['Дубль вопроса'] }}\n\nДУБЛЬ ОТВЕТА (НА ДРУГИХ СТРАНИЦАХ СТОИТ ТАК):\n{{ $json['Дубль ответа'] }}\n\nЗАДАЧА:\n1. Перефразируй ВОПРОС — сохрани смысл, но измени формулировку. Привяжи к конкретному объекту \"{{ $json['Объект (H1)'] }}\" если это уместно.\n2. Перепиши ОТВЕТ — сохрани суть и факты, но сделай текст уникальным. Упомяни особенности конкретного объекта, региона или специализации, если это уместно.\n\nПРАВИЛА:\n- Рерайт должен кардинально отличаться от дублей выше\n- Сохраняй медицинскую точность\n- Текст — только на русском языке\n- Никакого HTML\n- Никаких комментариев от себя\n\nВЫДАЙ СТРОГО В ФОРМАТЕ JSON:\n{\n  \"rewrite_question\": \"здесь переписанный вопрос\",\n  \"rewrite_answer\": \"здесь переписанный ответ\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        160,
+        -96
+      ],
+      "id": "920ea0f3-da18-41aa-a1ad-e38b48561b93",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - FAQ/рерайт для Порталов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2110713410,
+          "mode": "list",
+          "cachedResultName": "Лист2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qr03ZNM3adXqvxEdNUb6WP-q_D0CqBf7EorEuotJo4Q/edit#gid=2110713410"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "№": "={{ $('Loop Over Items').item.json.row_number }}",
+            "Кластер": "={{ $('Loop Over Items').item.json['Кластер'] }}",
+            "Вопрос": "={{ $('Loop Over Items').item.json['Вопрос'] }}",
+            "Рерайт (Вопрос-Ответ)": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "№"
+          ],
+          "schema": [
+            {
+              "id": "№",
+              "displayName": "№",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Кластер",
+              "displayName": "Кластер",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Вопрос",
+              "displayName": "Вопрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ответ",
+              "displayName": "Ответ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Дубль вопроса",
+              "displayName": "Дубль вопроса",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Дубль ответа",
+              "displayName": "Дубль ответа",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Рерайт (Вопрос)",
+              "displayName": "Рерайт (Вопрос)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Рерайт (Вопрос-Ответ)",
+              "displayName": "Рерайт (Вопрос-Ответ)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        80
+      ],
+      "id": "98bd321c-577e-4d30-bcb4-b1751183542d",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -448,
+        48
+      ],
+      "id": "d3a37f2c-26ba-4e00-896d-1bc32fdebec2",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        96,
+        144
+      ],
+      "id": "dd7061fe-cf30-4c20-93ce-5c2f6454f27a",
+      "name": "Claude",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        288
+      ],
+      "id": "94f5f90a-b9c9-42d9-99ce-45ff9010132c",
+      "name": "Free",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fGthAQoE0jOmscoH",
+          "name": "Google Gemini_№1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cef67896-1122-43f6-956c-cdf6822b4aa5",
+              "leftValue": "={{ $json['Рерайт (Ответ)'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -112,
+        16
+      ],
+      "id": "fc70cb56-d6a9-4853-bfc9-66ba7fd8423b",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "3addea1d-f5b5-46cb-aa74-481d7cfcb1f7",
+  "activeVersionId": null,
+  "versionCounter": 19,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-03T04:10:13.425Z",
+      "createdAt": "2026-03-03T04:10:13.425Z",
+      "role": "workflow:owner",
+      "workflowId": "yZrEjRXaDqUAW5i4",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

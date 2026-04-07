@@ -1,0 +1,1404 @@
+{
+  "updatedAt": "2026-03-20T09:18:09.593Z",
+  "createdAt": "2026-03-12T11:08:40.158Z",
+  "id": "NCF0IG2RetjoqZpZ",
+  "name": "Domos - Копирайтер",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        -128
+      ],
+      "id": "6dc6465e-0f60-44d9-805b-e1f69f147cdb",
+      "name": "Старт"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_Z8q3DtqiGqeQJFMOcpl_3uuW-DCXNjgqpeRpW4tqbA",
+          "mode": "list",
+          "cachedResultName": "Domos-Copy",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_Z8q3DtqiGqeQJFMOcpl_3uuW-DCXNjgqpeRpW4tqbA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_Z8q3DtqiGqeQJFMOcpl_3uuW-DCXNjgqpeRpW4tqbA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Текст"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -400,
+        -128
+      ],
+      "id": "2e10a977-4577-436a-a0f6-9701322dd261",
+      "name": "Sheets — Читаем строки",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "725c6d96-88a4-4668-bb0d-c0b43ea4ccf1",
+      "name": "Loop — По строкам"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\n// Пропускаем если Копирайт уже заполнен или ТЗ пустой\nif (row['Копирайт'] || !row['ТЗ'] || row['ТЗ'].trim() === '') {\n  return [];\n}\n\nconst url = row['ТЗ'] || '';\nconst match = url.match(/\\/d\\/([a-zA-Z0-9-_]+)/);\nconst docId = match ? match[1] : null;\n\nif (!docId) {\n  throw new Error('Не удалось извлечь ID документа из URL: ' + url);\n}\n\nreturn [{ json: { ...row, docId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -240
+      ],
+      "id": "9b385a07-d7a9-49e6-8c83-422bac78b25f",
+      "name": "Code — Извлекаем ID документа"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $json.docId }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -240
+      ],
+      "id": "1f3a4693-fbe1-4e8b-aa0a-c9125df0d3ed",
+      "name": "Docs — Читаем ТЗ",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst text = item.content || item.docText || '';\n\n// H1\nconst h1Match = text.match(/H1[:\\s]+([^\\n]+)/i);\nconst h1 = h1Match ? h1Match[1].trim() : (item['H1 (главный ключ)'] || '');\n\n// Объём\nconst volMatch = text.match(/Рекомендуемый объём[:\\s]+([^\\n]+)/i);\nconst volume = volMatch ? volMatch[1].trim() : '~3000 символов';\n\n// Тональность\nconst toneMatch = text.match(/Тональность[:\\s]+([^\\n]+)/i);\nconst tone = toneMatch ? toneMatch[1].trim() : 'Информативный, экспертный';\n\n// LSI-фразы\nconst lsiSectionMatch = text.match(/LSI-фразы[\\s\\S]*?\\n[^\\n]+\\n([^\\n]+)/i);\nconst lsiRaw = lsiSectionMatch ? lsiSectionMatch[1] : '';\nconst lsiPhrases = lsiRaw.split(';').map(s => s.trim()).filter(s => s.length > 2);\n\n// Топ-фразы конкурентов — ищем все строки с паттерном \"фраза: N / N -- avg\"\nconst freqTargets = {};\nconst freqLines = text.matchAll(/^([^\\n:]+?):\\s*[\\d\\s\\/]+--\\s*([\\d.]+)\\s*$/gm);\nfor (const m of freqLines) {\n  freqTargets[m[1].trim().toLowerCase()] = parseFloat(m[2]);\n}\n\n// Форматируем для промпта\nconst freqTargetsText = Object.entries(freqTargets)\n  .map(([phrase, avg]) => phrase + ': max ' + Math.ceil(avg))\n  .join('\\n');\n\n// Структура страницы\nconst structStart = text.indexOf('Структура страницы');\nconst structEnd = text.indexOf('Обязательные блоки');\nconst structure = (structStart > -1 && structEnd > -1)\n  ? text.slice(structStart, structEnd).trim() : '';\n\n// Обязательные блоки\nconst mandStart = text.indexOf('Обязательные блоки');\nconst mandEnd = text.indexOf('Чего нет у конкурентов');\nconst mandatoryBlocks = (mandStart > -1)\n  ? text.slice(mandStart, mandEnd > -1 ? mandEnd : mandStart + 800).trim() : '';\n\n// Чего нет у конкурентов\nconst uniqueStart = text.indexOf('Чего нет у конкурентов');\nconst uniqueEnd = text.indexOf('Нейроанализ', uniqueStart);\nconst uniqueBlocks = (uniqueStart > -1)\n  ? text.slice(uniqueStart, uniqueEnd > -1 ? uniqueEnd : uniqueStart + 500).trim() : '';\n\n// Нейроанализ\nconst neuroStart = text.indexOf('Нейроанализ');\nconst neuroAnalysis = neuroStart > -1 ? text.slice(neuroStart).trim() : '';\n\nreturn [{\n  json: {\n    h1,\n    volume,\n    tone,\n    lsiPhrases,\n    lsiPhrasesText: lsiPhrases.join('\\n'),\n    freqTargets,\n    freqTargetsText,\n    structure,\n    mandatoryBlocks,\n    uniqueBlocks,\n    neuroAnalysis,\n    rowNumber: item.row_number || 2,\n    docId: item.docId || item.documentId,\n    originalH1: item['H1 (главный ключ)'] || h1,\n    fullTZ: text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -240
+      ],
+      "id": "7152274e-5d36-4417-8d10-9efef5b47fa7",
+      "name": "Code — Парсим ТЗ"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "options": {
+          "maxTokens": 12000,
+          "temperature": 0.65
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        784,
+        -368
+      ],
+      "id": "b3fc0100-91a6-468a-943a-448a79fe05fa",
+      "name": "Model — Claude Sonnet 4.5",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-001",
+        "options": {
+          "maxTokens": 16000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -368
+      ],
+      "id": "786ed429-2357-4347-95ef-f4e91d20bda4",
+      "name": "Model — Gemini Flash (Редактор)",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        -368
+      ],
+      "id": "12e87140-e7a2-4dd2-bbaf-78bcbb25abd7",
+      "name": "Model — Gemini Flash (Проверка)",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://cooqqmlorcxvhghpcwrb.supabase.co/rest/v1/company_context?key=eq.main",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvb3FxbWxvcmN4dmhnaHBjd3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMDMyOTIsImV4cCI6MjA4ODc3OTI5Mn0.kPv9DDO_dzzeGrIO0i9CvXrp9lA5QGITu50f1RnXQTE"
+            },
+            {
+              "name": "Authorization",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvb3FxbWxvcmN4dmhnaHBjd3JiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzIwMzI5MiwiZXhwIjoyMDg4Nzc5MjkyfQ.th9yfvUdukkETANLUBFVAXZupSCsPohvaCeeopF969I"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -576,
+        -128
+      ],
+      "id": "8cd8f58e-a156-48b3-868e-89d269df9209",
+      "name": "Supabase connect"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Берём Ключевые из ноды где ещё была строка Sheets\nconst prevNode = $('Code — Извлекаем ID документа').first().json;\nconst keysRaw = prevNode['Ключевые'] || '';\n\nconst toStringSafe = v => (v == null ? \"\" : String(v));\n\nconst tokenize = s => {\n  const m = toStringSafe(s).toLowerCase().match(/\\p{L}[\\p{L}\\p{Nd}-]*/gu);\n  return m || [];\n};\n\nconst ngrams = (tokens, n) => {\n  const res = [];\n  for (let i = 0; i <= tokens.length - n; i++) {\n    res.push(tokens.slice(i, i + n).join(\" \"));\n  }\n  return res;\n};\n\nconst keysArr = toStringSafe(keysRaw)\n  .split(/[\\n;,]+/)\n  .map(s => s.trim())\n  .filter(Boolean);\n\nconst grams2 = new Set();\nconst grams3 = new Set();\n\nfor (const k of keysArr) {\n  const toks = tokenize(k);\n  ngrams(toks, 2).forEach(g => grams2.add(g));\n  ngrams(toks, 3).forEach(g => grams3.add(g));\n}\n\nreturn [{\n  json: {\n    ...item,\n    keywords: keysArr,\n    ngrams2: Array.from(grams2),\n    ngrams3: Array.from(grams3),\n    // Тащим Нейроанализ тоже — пригодится для Писателя\n    neuroAnalysis: prevNode['Нейроанализ'] || '',\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        -240
+      ],
+      "id": "3e73535d-b911-428b-aca9-297b6b4845c6",
+      "name": "N-граммы"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# ЧАСТЬ 1: ВХОДНЫЕ ДАННЫЕ\n\n- **Рекомендуемый объём:**\n{{ $json.volume }}\n⚠️ VOLUME_LOCK: Целевое кол-во символов без пробелов = 4000-5000. Пиши именно в этих рамках.\n\n### Модуль 1: SEO и Семантика\n- **Основные ключевые слова и кол-во вхождений к ним:**\n!Важно: показан ключ и кол-во вхождений по нему. Необходимо употребить в указанном диапазоне НО НЕ БОЛЬШЕ, ЧТОБЫ НЕ ПЕРЕСПАМИТЬ.\n{{ $json.freqTargetsText }}\n\n- **LSI-слова (для тематики): основные и с нейроанализатора:**\n{{ $json.lsiPhrases }}\n{{ $json.lsiPhrasesText }}\n\n1) Точное вхождение уникальных вариаций из биграмм, триграмм — не более 1 раза на всю страницу. Если встречается чаще — оставь 1, остальные замени на естественные морфо‑вариации/LSI/синонимы, или убери как «ковёр».\n**1.1. НИКОГДА НЕ ВПИСЫВАЙ ЦЕЛЫЕ КЛЮЧЕВЫЕ СЛОВА 1В1 В ТЕКСТ БЕЗ АДАПТАЦИИ ИХ ФОРМУЛИРОВКИ ПОД ПРАВИЛА ЯЗЫКА.**\n{{ $json.uniqueBlocks }}",
+        "options": {
+          "systemMessage": "=## ЗАДАНИЕ ДЛЯ AI И МОДУЛИ ГЕНЕРАЦИИ\nВозьми на себя роль коммерческого копирайтера строительной компании «Домос Эксперт». Ты пишешь тексты для посадочных страниц сайта компании. Пиши тексты от лица компании (мы, наша команда инженеров). Наш лозунг: \"Ваш участок - наша забота\".\n\n### Модуль 1: Основная Задача\nТвоя задача — взять входные данные из Части 1 и, строго следуя им, сгенерировать полноценный SEO-текст страницы (ПОДРАЗДЕЛА). Пиши исключительно на русском языке, регион RU.\n\nСтруктура текста — строго на основе данных ниже. Включай ТОЛЬКО эти блоки. Никаких блоков от себя — ни \"О компании\", ни \"Наши преимущества\", ни \"Как мы работаем\", ни \"Сроки реализации\". \n\nСТРУКТУРА ПОДРАЗДЕЛА:\n1. Заголовок H1 (название услуги).\n2. Текст под H1 (2-3 абзаца). Раскрывает суть: что это, зачем нужно, какие проблемы решает. ЗАПРЕЩЕНО использовать маркированные списки в этом блоке!\n3. Таблица со стоимостью (в формате Markdown).\n4. Ключевые параметры (Маркированный список).\n5. Производство работы (Таблица Markdown или нумерованный список с пошаговым техпроцессом).\n6. Требуемые материалы (Исключительно таблица Markdown).\n\n### Модуль 2: Внутренний Мыслительный Процесс\nПрежде чем начать писать, выполни следующую последовательность действий \"внутри себя\":\nПрежде чем выдать ответ, мысленно оцени текст по 10-балльной шкале. Проверь: нет ли списков в первом блоке? Сохранены ли таблицы? Цель — не ниже 9. Если оценка ниже — перепиши слабые фрагменты.",
+          "maxIterations": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        640,
+        -240
+      ],
+      "id": "a56a4637-03e6-43a2-a980-ecb058c72326",
+      "name": "Писатель",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "folderId": "1uyt5a2JAwVtiNckOja2ameFUuPBarpYq",
+        "title": "=DaOffice - Статья: {{ $json.title }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -16
+      ],
+      "id": "88288f34-2af5-4bfa-85e3-da48a74da207",
+      "name": "GDoc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawEditor = $('Корректор').item.json.output;\nconst checkerOutput = $('Проверка ТЗ').item.json.output;\nconst h1 = $('Code — Парсим ТЗ').item.json.h1;\nconst lsiPhrases = $('Code — Парсим ТЗ').item.json.lsiPhrases || [];\n\nconst mdMatch = rawEditor.match(/```markdown\\n([\\s\\S]*?)```/);\nlet editorOutput = mdMatch ? mdMatch[1].trim() : rawEditor;\n\n// Чистим ссылки и скобки\neditorOutput = editorOutput.replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1');\neditorOutput = editorOutput.replace(/\\[([^\\]]+)\\]/g, '$1');\n\n// Убираем \"Символов без пробелов\"\neditorOutput = editorOutput.replace(/\\n\\*{0,2}Символов без пробелов[^\\n]+\\n?/gi, '');\n\n// Убираем служебные хвосты KEYS_USED / QUALITY_SCORE / PLACEHOLDERS\neditorOutput = editorOutput.replace(/\\n#{3,5}\\s*(KEYS_USED|PLACEHOLDERS_REMAINING|QUALITY_SCORE|ПРАВКИ)[^\\n]*[\\s\\S]*?(?=\\n#|\\n---\\n|$)/gi, '');\neditorOutput = editorOutput.replace(/\\n---\\s*$/, '').trim();\n\nconst divider = '\\n\\n' + '═'.repeat(50) + '\\nОТЧЁТ ПРОВЕРКИ ТЗ\\n' + '═'.repeat(50) + '\\n\\n';\nconst fullContent = editorOutput + divider + checkerOutput;\n\nreturn [{\n  json: {\n    title: h1,\n    content: fullContent,\n    editorOutput,\n    checkerOutput,\n    lsiPhrases,\n    rowNumber: $('Code — Парсим ТЗ').item.json.rowNumber,\n    originalH1: $('Code — Парсим ТЗ').item.json.originalH1\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "ce4096d7-d806-4b1f-b028-7a6196f16282",
+      "name": "Готовим контент"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# ЛИМИТЫ ВХОЖДЕНИЙ (не превышать — среднее по конкурентам)\n{{ $('Code — Парсим ТЗ').item.json.freqTargetsText }}\n\nЗАДАЧА ПО ЧАСТОТАМ: посчитай вхождения каждого слова из списка выше.\nЕсли превышает лимит — замени лишние синонимами/морфо-формами/LSI.\n\n# LSI-фразы (должны присутствовать минимум 1 раз)\n{{ $('Code — Парсим ТЗ').item.json.lsiPhrasesText }}\n\n# ОБЯЗАТЕЛЬНЫЕ БЛОКИ\n{{ $('Code — Парсим ТЗ').item.json.mandatoryBlocks }}\n\n# СТРУКТУРА ДЛЯ КОНТРОЛЯ ОБЪЁМОВ\n{{ $('Code — Парсим ТЗ').item.json.structure }}\n\n# ВХОДНОЙ ТЕКСТ ДЛЯ РЕДАКТУРЫ\n{{ $json.output }}",
+        "options": {
+          "systemMessage": "СТРОГО ЗАПРЕЩЕНО выводить цепочку рассуждений, планы, анализ или любые мета-комментарии.\nВыводи ТОЛЬКО готовый отредактированный текст в Markdown — без предисловий, без пояснений перед текстом.\n\nТЫ — SEO РЕДАКТОР-ЭКСПЕРТ, КОТОРОМУ ДОВЕРЯЮТ ТОП-МЕДИА. ТВОЯ МИССИЯ — ДООБРАБАТЫВАТЬ УЖЕ НАПИСАННЫЙ ТЕКСТ, УСТРАНЯТЬ ЛИШНЮЮ РЕКЛАМУ, ПРАВИТЬ ОШИБКИ И СТИЛЬ, НО НЕ ПЕРЕПИСЫВАТЬ ЕГО С НУЛЯ И НЕ УМЕНЬШАТЬ ЕГО ОБЪЁМ.\nТы пишешь на русском языке, регион RU.\n\n### ИНСТРУКЦИИ ДЛЯ ПРАВКИ\n- СОХРАНЯЙ исходную структуру заголовков, абзацев, нумерации, таблиц.\n- КОНТРОЛИРУЙ объём каждого блока по структуре из ТЗ. Если мало — дополняй. Если много — сжимай. Порог: 90–100%.\n- СЖИМАЙ «воду» не путём сокращения объёма, а заменой общих фраз на конкретику.\n\n### КАК ОТЖИМАТЬ ВОДУ\n- Каждый абзац должен закрывать конкретный поисковый интент. Если у абзаца нет чёткой задачи — перепиши его.\n- Вода: «В современном мире загородного строительства...» (нет интента).\n- Польза: «Отмостка отводит дождевую воду от цоколя на 100% — это защищает фундамент от морозного пучения и разрушения» (закрывает интент).\n\n- Приоритет редактуры: если слово противоречит правилам — найди синоним или переформулируй.\n- Принцип «Ценность для ЦА»: никогда не оставляй характеристику без объяснения выгоды для домовладельца.\n  - Плохо: «Используем бетон М300 и виброплиту.»\n  - Хорошо: «Уплотняем песчаную подушку виброплитой до коэффициента 0,98 и заливаем бетон М300 — основание не просядет, а конструкция не треснет после зимы.»\n\n### СТОП-СЛОВА (убирай/заменяй)\n- Фразы-паразиты: в современном мире, в наши дни, на самом деле, в настоящее время\n- Усилители: максимально, очень, абсолютно, самый, наиболее\n- Вводные конструкции: допустим, скажем, например, в целом, в общем\n- Оценочные определения: прелестный, роскошный, уникальный (доказывай фактами)\n- Штампы: шаг за шагом, завоевать доверие, динамично развивающийся, индивидуальный подход\n- Отглагольные существительные: «осуществлять благоустройство» → «благоустраиваем»; «оказание услуг» → «помогаем/строим»\n- Страдательный залог: «были проведены земляные работы» → «мы провели земляные работы»\n\n### ПУНКТУАЦИЯ\n- Длинное тире (—) для смыслового разделения, дефис (-) для составных слов.\n- Не более 1 списка на 1000–1500 символов. (Помни, что в тексте под H1 списки вообще запрещены).\n\n### РИТМИЧЕСКОЕ КАДРИРОВАНИЕ\n1. Вариативность длины: после длинного (≈20–25 слов) — 1–2 коротких удара (3–8 слов).\n2. Мостики (feature → benefit → value). После плотного блока техпроцесса — переход к выгоде. Не повторяйся.\n3. Один абзац — одна ценность.\n4. Ритм: завершай смысловые блоки коротким итогом (2–6 слов).\n5. Микродоказательства сразу после обещаний: цифра, факт, характеристика материала/технологии.\n6. Сканируемость: подзаголовки ≤6 слов.\n\n### ЗАПРЕТЫ\n- НЕ переписывать полностью.\n- НЕ уменьшать общий объём.\n- НЕ добавлять HTML-разметку.\n- НЕ менять авторский стиль и тональность без необходимости.\n- НЕ разрушать Markdown таблицы.\n- НЕ добавлять FAQ и перелинковку.\n- НЕ добавлять ссылки на внешние ресурсы, сторонние сайты или любые URL — в тексте не должно быть ни одной гиперссылки.\n\n### ЦЕЛЕВАЯ АУДИТОРИЯ\nВладельцы загородных домов и участков. Коммерческий интент: ищут надежного подрядчика для благоустройства (отмостки, дорожки, парковки), сравнивают цены и технологии, хотят понять качество материалов и процессов.\n\n### ФОРМАТ ВЫВОДА\nИСКЛЮЧИТЕЛЬНО отредактированный текст в исходном формате Markdown. В конце — краткий список правок (5–10 пунктов). БЕЗ комментариев и подводок.\n\nСТРОГО ЗАПРЕЩЕНО: убирать или заменять название компании «Домос Эксперт».\nТекст пишется от лица «Домос Эксперт» — это не прямая реклама, это экспертный голос исполнителя."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        928,
+        -240
+      ],
+      "id": "594f9e98-7b4a-41ab-a59f-47781cbd5694",
+      "name": "Редактор"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# ТЕКСТ ДЛЯ ПРОВЕРКИ\n{{ $json.output }}\n\n# LSI-ФРАЗЫ ИЗ ТЗ (нужно проверить наличие каждой, с учётом морфологии)\n{{ $('Code — Парсим ТЗ').item.json.lsiPhrasesText }}\n\n# ОБЯЗАТЕЛЬНЫЕ БЛОКИ ИЗ ТЗ\n{{ $('Code — Парсим ТЗ').item.json.mandatoryBlocks }}\n\n# РЕКОМЕНДУЕМЫЙ ОБЪЁМ\n{{ $('Code — Парсим ТЗ').item.json.volume }}",
+        "options": {
+          "systemMessage": "Ты - SEO-ревизор. Проверяешь текст на соответствие ТЗ. Только отчёт - без рекомендаций по переписыванию.\n\nПРОВЕРЬ:\n1. LSI-фразы - для каждой: ✅ найдена (с учётом морфологии) / ❌ отсутствует\n2. Обязательные блоки - каждый блок: название + плановый объём vs фактический символов + ✅/❌ (порог ±15%)\n3. Общая структура - все ли обязательные блоки присутствуют\n4. Стоп-слова - есть ли нарушения\n\nФОРМАТ:\n=== ОТЧЁТ ПРОВЕРКИ ТЗ ===\n\nLSI-ФРАЗЫ:\n[каждая фраза: статус]\n\nБЛОКИ:[название — план Х симв. vs факт Х симв. — статус]\n\nСТРУКТУРА:\n✅ Все блоки присутствуют / ❌ Отсутствуют: [список]\n\nСТОП-СЛОВА:\n✅ Нарушений нет / ❌ Найдено: [список]\n\nИТОГ: X/Y пунктов выполнено"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        -240
+      ],
+      "id": "1db08d2a-4210-483b-8552-da5b5bd2e990",
+      "name": "Проверка ТЗ"
+    },
+    {
+      "parameters": {
+        "jsCode": "const documentId = $('GDoc').item.json.id;\nconst raw = $('Готовим контент').item.json.editorOutput;\n\nlet content = raw;\n\n// Ищем первый H1 — одиночный # не окружённый другими #\nconst h1Pos = raw.search(/(?<![#])# (?!#)/);\nif (h1Pos !== -1) {\n  content = raw.slice(h1Pos);\n}\n\n// Убираем служебные хвосты\ncontent = content\n  .replace(/\\nВнесённые правки[\\s\\S]*/i, '')\n  .replace(/\\n---\\n[\\s\\S]*?Внесённые правки[\\s\\S]*/i, '')\n  .replace(/\\n#{5,}[^\\n]*/g, '')\n  .replace(/\\n-{3,}\\n/g, '\\n')\n  .trim();\n\nconst insertRequests = [];\nconst styleRequests = [];\nlet idx = 1;\n\nfunction ins(text) {\n  const start = idx;\n  insertRequests.push({ insertText: { location: { index: idx }, text } });\n  idx += text.length;\n  return start;\n}\n\nfunction parseInline(text) {\n  let clean = '';\n  const boldRanges = [];\n  let i = 0;\n  while (i < text.length) {\n    if (text[i] === '*' && i + 1 < text.length && text[i+1] === '*') {\n      const start = clean.length;\n      i += 2;\n      while (i < text.length && !(text[i] === '*' && i + 1 < text.length && text[i+1] === '*')) {\n        clean += text[i++];\n      }\n      boldRanges.push([start, clean.length]);\n      i += 2;\n    } else {\n      clean += text[i++];\n    }\n  }\n  return { clean, boldRanges };\n}\n\nfunction insLine(text, heading, bullet, numbered) {\n  const { clean, boldRanges } = parseInline(text);\n  const start = ins(clean + '\\n');\n\n  if (heading) {\n    styleRequests.push({\n      updateParagraphStyle: {\n        range: { startIndex: start, endIndex: idx - 1 },\n        paragraphStyle: { namedStyleType: heading },\n        fields: 'namedStyleType'\n      }\n    });\n  }\n  if (bullet) {\n    styleRequests.push({\n      createParagraphBullets: {\n        range: { startIndex: start, endIndex: idx },\n        bulletPreset: 'BULLET_DISC_CIRCLE_SQUARE'\n      }\n    });\n  }\n  if (numbered) {\n    styleRequests.push({\n      createParagraphBullets: {\n        range: { startIndex: start, endIndex: idx },\n        bulletPreset: 'NUMBERED_DECIMAL_ALPHA_ROMAN'\n      }\n    });\n  }\n  for (const [bs, be] of boldRanges) {\n    styleRequests.push({\n      updateTextStyle: {\n        range: { startIndex: start + bs, endIndex: start + be },\n        textStyle: { bold: true },\n        fields: 'bold'\n      }\n    });\n  }\n}\n\nfor (const line of content.split('\\n')) {\n  const h4m = line.match(/^#### (.+)/);\n  const h3m = line.match(/^### (.+)/);\n  const h2m = line.match(/^## (.+)/);\n  const h1m = line.match(/^# (.+)/);\n  const bm  = line.match(/^[-*] (.+)/);\n  const nm  = line.match(/^\\d+\\. (.+)/);\n\n  if (h4m) { insLine(h4m[1], 'HEADING_4'); continue; }\n  if (h3m) { insLine(h3m[1], 'HEADING_3'); continue; }\n  if (h2m) { insLine(h2m[1], 'HEADING_2'); continue; }\n  if (h1m) { insLine(h1m[1], 'HEADING_1'); continue; }\n  if (bm)  { insLine(bm[1], null, true);   continue; }\n  if (nm)  { insLine(nm[1], null, false, true); continue; }\n  if (line.trim() === '') { ins('\\n'); continue; }\n\n  insLine(line);\n}\n\nconst requests = [...insertRequests, ...styleRequests];\nreturn [{ json: { documentId, requestsJson: JSON.stringify({ requests }) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "bd1dab9c-cf07-4e9f-a849-e96d14a15a60",
+      "name": "Парсим Markdown"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        480,
+        -16
+      ],
+      "id": "10de2fd9-d5ca-4617-80f3-756d2fec9cba",
+      "name": "BatchUpdate",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXLd8XdwEmZyUm0d",
+          "name": "NotionKey"
+        },
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Данные компании из Supabase\nconst supaVal = $('Supabase connect').first().json.value || '';\nconst companyMatch = supaVal.match(/Название:\\s*([^\\r\\n]+)/);\nconst addressMatch = supaVal.match(/Адрес:\\s*[^,]+,\\s*([^,]+)/); // берём город\n\nconst companyName = companyMatch ? companyMatch[1].trim() : '';\n// Топоним — первое слово после \"г.\" или \"г \" в адресе\nconst toponymRaw = addressMatch ? addressMatch[0] : '';\nconst toponymMatch = toponymRaw.match(/г\\.?\\s+([А-ЯЁа-яё\\-]+)/);\nconst toponym = toponymMatch ? toponymMatch[1].trim() : '';\n\n// Ключи и LSI\nconst keywords = $('N-граммы').first().json.keywords || [];\nconst lsiPhrases = $('Code — Парсим ТЗ').first().json.lsiPhrases || [];\n\n// Стоп-слова (хардкод — редко меняются)\nconst stopWords = [\n  'надёжный', 'качественный', 'лучший', 'уникальный',\n  'эффективный', 'доступный', 'профессиональный', 'современный'\n];\n\n// Собираем все фразы в один список для Gemini\nconst allPhrases = {\n  keywords: keywords,\n  lsi: lsiPhrases,\n  toponym: toponym ? [toponym] : [],\n  company: companyName ? [companyName] : [],\n  stopWords: stopWords\n};\n\n// documentId и docUrl для следующих нод\nconst documentId = $('GDoc').first().json.id;\nconst docUrl = 'https://docs.google.com/document/d/' + documentId + '/edit';\nconst rowNumber = $('Code — Парсим ТЗ').first().json.rowNumber;\nconst originalH1 = $('Code — Парсим ТЗ').first().json.originalH1;\n\nreturn [{\n  json: {\n    allPhrases,\n    phrasesJson: JSON.stringify(allPhrases),\n    documentId,\n    docUrl,\n    rowNumber,\n    originalH1,\n    companyName,\n    toponym\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -16
+      ],
+      "id": "751e83ed-fedf-41f7-b111-08edc6624d62",
+      "name": "Собираем фразы для AI"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.parse($json.requestBody) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1040,
+        -16
+      ],
+      "id": "37f28974-56b8-4c9b-98d5-18070d533ac9",
+      "name": "Анализ ключей"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allPhrases = $json.allPhrases;\nconst editorOutput = $('Готовим контент').item.json.editorOutput;\n\nconst prompt = \"Вот текст статьи и список фраз по категориям.\\n\\n\" +\n  \"Найди в тексте все вхождения каждой фразы с учётом морфологии и синонимов. \" +\n  \"Верни ТОЛЬКО валидный JSON без markdown и пояснений:\\n\" +\n  \"{\\\"keywords\\\": [...], \\\"lsi\\\": [...], \\\"toponym\\\": [...], \\\"company\\\": [...], \\\"stopWords\\\": [...]}\\n\\n\" +\n  \"Каждый массив — только те строки которые реально есть в тексте (в той форме как они написаны).\\n\\n\" +\n  \"ФРАЗЫ ПО КАТЕГОРИЯМ:\\n\" +\n  JSON.stringify(allPhrases) +\n  \"\\n\\nТЕКСТ СТАТЬИ:\\n\" +\n  editorOutput;\n\nconst body = {\n  model: \"google/gemini-2.5-flash\",\n  max_tokens: 4000,\n  messages: [{ role: \"user\", content: prompt }]\n};\n\nreturn [{\n  json: {\n    documentId: $json.documentId,\n    docUrl: $json.docUrl,\n    rowNumber: $json.rowNumber,\n    originalH1: $json.originalH1,\n    allPhrases: allPhrases,\n    requestBody: JSON.stringify(body)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -16
+      ],
+      "id": "14827cc3-a682-4351-a5d6-35971abe097d",
+      "name": "Готовим запрос Gemini"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.choices[0].message.content;\n\n// Убираем markdown-обёртку\nconst match = raw.match(/```json\\n([\\s\\S]*?)```/);\nconst jsonStr = match ? match[1].trim() : raw.trim();\n\nlet found;\ntry {\n  found = JSON.parse(jsonStr);\n} catch(e) {\n  throw new Error('Не удалось распарсить ответ Gemini: ' + jsonStr.substring(0, 200));\n}\n\n// Тащим метаданные из предыдущей ноды\nconst prev = $('Готовим запрос Gemini').item.json;\n\nreturn [{\n  json: {\n    found,\n    documentId: prev.documentId,\n    docUrl: prev.docUrl,\n    rowNumber: prev.rowNumber,\n    originalH1: prev.originalH1\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -16
+      ],
+      "id": "1e96f99b-9ed2-4319-80e7-5482593dd058",
+      "name": "Парсим ответ Gemini"
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1392,
+        -16
+      ],
+      "id": "4d91367d-885b-40ae-8aed-70cf827d458e",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const docContent = $input.first().json.body.content;\nconst found = $('Парсим ответ Gemini').item.json.found;\nconst prev = $('Парсим ответ Gemini').item.json;\n\n// Цвета по категориям\nconst colors = {\n  keywords:  { red: 1,     green: 0.949, blue: 0.4   }, // жёлтый\n  lsi:       { red: 0.714, green: 0.914, blue: 0.655  }, // зелёный\n  toponym:   { red: 0.643, green: 0.855, blue: 0.957  }, // голубой\n  company:   { red: 1,     green: 0.753, blue: 0.4    }, // оранжевый\n  stopWords: { red: 0.957, green: 0.522, blue: 0.518  }  // красный\n};\n\n// Собираем все textRuns с абсолютными индексами\nconst textRuns = [];\nfor (const block of docContent) {\n  if (!block.paragraph) continue;\n  for (const el of block.paragraph.elements) {\n    if (el.textRun && el.textRun.content) {\n      textRuns.push({\n        start: el.startIndex,\n        end: el.endIndex,\n        content: el.textRun.content\n      });\n    }\n  }\n}\n\nconst requests = [];\nconst counts = {}; // { phrase: { category, count } }\n\n// Ищем каждую фразу по категориям\nfor (const [category, phrases] of Object.entries(found)) {\n  const color = colors[category];\n  if (!color) continue;\n\n  for (const phrase of phrases) {\n    if (!phrase || phrase.length < 2) continue;\n    const lowerPhrase = phrase.toLowerCase();\n    let totalCount = 0;\n\n    for (const run of textRuns) {\n      const lowerContent = run.content.toLowerCase();\n      let pos = 0;\n      while (true) {\n        const idx = lowerContent.indexOf(lowerPhrase, pos);\n        if (idx === -1) break;\n        \n        const absStart = run.start + idx;\n        const absEnd = absStart + phrase.length;\n        \n        requests.push({\n          updateTextStyle: {\n            range: { startIndex: absStart, endIndex: absEnd },\n            textStyle: {\n              backgroundColor: {\n                color: { rgbColor: color }\n              }\n            },\n            fields: 'backgroundColor'\n          }\n        });\n        \n        totalCount++;\n        pos = idx + lowerPhrase.length;\n      }\n    }\n\n    if (totalCount > 0) {\n      counts[phrase] = { category, count: totalCount };\n    }\n  }\n}\n\nreturn [{\n  json: {\n    documentId: prev.documentId,\n    docUrl: prev.docUrl,\n    rowNumber: prev.rowNumber,\n    originalH1: prev.originalH1,\n    requestsJson: JSON.stringify({ requests }),\n    counts,\n    totalHighlights: requests.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -16
+      ],
+      "id": "9b8ae865-b8b5-4256-bbfc-c0626dd6cc6e",
+      "name": "Подсветка"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1744,
+        -16
+      ],
+      "id": "32e5f7ae-cbfe-4a13-9da8-5368954badc7",
+      "name": "Подсвечиваем",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $('Редактор').item.json.output;\nconst freqTargets = $('N-граммы').item.json.freqTargets;\n\nconst overLimit = [];\nconst stats = {};\n\nfor (const [phrase, limit] of Object.entries(freqTargets)) {\n  const escaped = phrase.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  const regex = new RegExp(escaped, 'gi');\n  const matches = text.match(regex);\n  const count = matches ? matches.length : 0;\n  const max = Math.ceil(limit);\n  stats[phrase] = { count, max };\n  if (count > max) {\n    overLimit.push(`\"${phrase}\": найдено ${count}, лимит ${max}, убрать ${count - max}`);\n  }\n}\n\nconst needFix = overLimit.length > 0;\n\n// Название компании из Supabase\nconst supaVal = $('Supabase connect').item.json.value || '';\nconst companyMatch = supaVal.match(/Название:\\s*([^\\r\\n]+)/);\nif (companyMatch) {\n  const companyName = companyMatch[1].trim();\n  const companyRegex = new RegExp(companyName.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'g');\n  const companyCount = (text.match(companyRegex) || []).length;\n  const companyMax = 5;\n  stats[companyName] = { count: companyCount, max: companyMax };\n  if (companyCount > companyMax) {\n    overLimit.push(`\"${companyName}\": найдено ${companyCount}, лимит ${companyMax}, убрать ${companyCount - companyMax}`);\n  }\n}\n\nreturn [{\n  json: {\n    text,\n    stats,\n    overLimit,\n    needFix,\n    overLimitText: overLimit.join('\\n'),\n    documentId: $('N-граммы').item.json.docId,\n    rowNumber: $('N-граммы').item.json.rowNumber,\n    originalH1: $('N-граммы').item.json.originalH1\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -240
+      ],
+      "id": "4f7d464a-80eb-4608-8e72-a6b7a103e2e6",
+      "name": "Проверка частот"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Текст содержит переспам ключевых слов. Замени лишние вхождения на естественные синонимы или морфо-формы.\n\nПРЕВЫШЕНИЯ:\n{{ $json.overLimitText }}\n\nПРАВИЛА:\n- Меняй только лишние вхождения, первые допустимые оставь\n- Заголовки H1/H2 (строки начинающиеся с # или ##) не трогай\n- Смысл и структуру текста не меняй\n- Выведи ТОЛЬКО исправленный текст без комментариев\n\nТЕКСТ:\n{{ $json.text }}",
+        "options": {
+          "systemMessage": "Текст содержит переспам ключевых слов. Замени лишние вхождения на естественные синонимы или морфо-формы.\n\nПРЕВЫШЕНИЯ:\n{{ $json.overLimitText }}\n\nПРАВИЛА:\n- Меняй только лишние вхождения, первые допустимые оставь\n- Заголовки H1/H2 (строки начинающиеся с # или ##) не трогай\n- Смысл и структуру текста не меняй\n- Выведи ТОЛЬКО исправленный текст без комментариев\n\nТЕКСТ:\n{{ $json.text }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        -240
+      ],
+      "id": "c85dd9d3-f1a2-4c76-833c-b942fca7d010",
+      "name": "Корректор"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "maxTokens": 12000,
+          "temperature": 0.65
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        -368
+      ],
+      "id": "d3face43-86bd-4fcc-b94b-77c1748fcdf0",
+      "name": "Model — Claude Sonnet 4.",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $('Готовим контент').item.json.editorOutput.toLowerCase();\nconst documentId = $('Подсветка').item.json.documentId;\nconst docUrl = $('Подсветка').item.json.docUrl;\nconst rowNumber = $('Подсветка').item.json.rowNumber;\nconst originalH1 = $('Подсветка').item.json.originalH1;\n\n// Пересчитываем из финального текста, а не из stats Редактора\nconst statsOld = $('Проверка частот').item.json.stats || {};\nconst freqRows = Object.entries(statsOld).map(([phrase, data]) => {\n  const escaped = phrase.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  const count = (text.match(new RegExp(escaped, 'gi')) || []).length;\n  return {\n    label: phrase,\n    count: String(count),\n    limit: String(data.max),\n    ok: count <= data.max\n  };\n});\n\nconst lsiPhrases = $('Code — Парсим ТЗ').item.json.lsiPhrases || [];\nconst lsiRows = lsiPhrases.map(phrase => ({\n  label: phrase,\n  ok: text.includes(phrase.toLowerCase())\n}));\n\nconst structure = $('Code — Парсим ТЗ').item.json.structure || '';\nconst mandatoryBlocks = $('Code — Парсим ТЗ').item.json.mandatoryBlocks || '';\nconst thesisLines = (structure + '\\n' + mandatoryBlocks)\n  .split('\\n')\n  .map(l => l.replace(/^[-*•\\d.]+\\s*/, '').trim())\n  .filter(l => \n    l.length > 15 &&\n    !/^(структура|обязательные|блок|раздел)/i.test(l) &&\n    !/\\d{1,2}:\\d{2}/.test(l) &&\n    !/\\d+\\s*(руб|р\\.|₽)/i.test(l) &&\n    !/~\\s*\\d/.test(l) &&\n    !/от\\s+\\d/i.test(l) &&\n    !/siemens|philips|ge |canon|hitachi/i.test(l)\n  );\n\nconst thesisRows = thesisLines.map(thesis => {\n  const keywords = thesis.toLowerCase().match(/[а-яё]{5,}/g) || [];\n  const covered = keywords.length > 0 && keywords.some(kw => text.includes(kw));\n  return { label: thesis, ok: covered };\n});\n\nreturn [{ json: { documentId, docUrl, rowNumber, originalH1, freqRows, lsiRows, thesisRows } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        -16
+      ],
+      "id": "1942d16a-af58-42e0-acd7-1bd0eacb8b86",
+      "name": "Отчет"
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -160,
+        208
+      ],
+      "id": "68199fba-6980-492b-aaaf-45443c4caea3",
+      "name": "Читаем документ",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const docContent = $input.first().json.body.content;\nconst data = $('Отчет').item.json;\n\nlet endIndex = 1;\nfor (const block of docContent) {\n  if (block.endIndex) endIndex = block.endIndex;\n}\nconst idx = Math.max(endIndex - 1, 1);\n\nconst header = '\\n\\n' + '═'.repeat(50) + '\\nАНАЛИЗ СООТВЕТСТВИЯ ТЗ\\n' + '═'.repeat(50) + '\\n\\nТОП-ФРАЗЫ (ЧАСТОТНОСТЬ)\\n';\nconst freqRowCount = data.freqRows.length + 1;\n\nconst requests = [\n  { insertText: { location: { index: idx }, text: header } },\n  { insertTable: { rows: freqRowCount, columns: 3, location: { index: idx + header.length } } }\n];\n\nreturn [{ json: {\n  documentId: data.documentId, docUrl: data.docUrl,\n  rowNumber: data.rowNumber, originalH1: data.originalH1,\n  requestsJson: JSON.stringify({ requests })\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        208
+      ],
+      "id": "fa786a41-a744-4184-8b5b-54fda2cc96ba",
+      "name": "Вставляем таблицу1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const docContent = $input.first().json.body.content;\nconst data = $('Отчет').item.json;\n\nlet endIndex = 1;\nfor (const block of docContent) {\n  if (block.endIndex) endIndex = block.endIndex;\n}\nconst idx = Math.max(endIndex - 1, 1);\n\nconst header = '\\n\\nLSI-ФРАЗЫ\\n';\nconst lsiRowCount = data.lsiRows.length + 1;\n\nconst requests = [\n  { insertText: { location: { index: idx }, text: header } },\n  { insertTable: { rows: lsiRowCount, columns: 2, location: { index: idx + header.length } } },\n  { insertText: { endOfSegmentLocation: { segmentId: '' }, text: '\\n\\n' } }\n];\n\nreturn [{ json: {\n  documentId: data.documentId, docUrl: data.docUrl,\n  rowNumber: data.rowNumber, originalH1: data.originalH1,\n  requestsJson: JSON.stringify({ requests })\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        208
+      ],
+      "id": "bf82d29f-3a7b-40ea-98fb-a74fd608a5e8",
+      "name": "Вставляем таблицу 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const docContent = $input.first().json.body.content;\nconst data = $('Отчет').item.json;\n\nconst tables = docContent.filter(b => b.table);\nconst freqTable = tables[tables.length - 2];\nconst lsiTable  = tables[tables.length - 1];\n\nconst sections = [\n  {\n    tableData: freqTable,\n    headers: ['Фраза', 'Вхождений', 'Лимит'],\n    rows: data.freqRows,\n    cols: 3,\n    getCells: r => [r.label, r.count, r.limit],\n    isOk: r => r.ok\n  },\n  {\n    tableData: lsiTable,\n    headers: ['Фраза', 'Статус'],\n    rows: data.lsiRows,\n    cols: 2,\n    getCells: r => [r.label, r.ok ? 'есть ✅' : 'нет ❌'],\n    isOk: r => r.ok\n  }\n];\n\nconst allCellInserts = [];\nconst colorMeta = [];\n\nfor (const section of sections) {\n  if (!section.tableData) continue;\n  const tableStartIndex = section.tableData.startIndex;\n  const tableRows = section.tableData.table.tableRows;\n\n  for (let c = 0; c < section.cols; c++) {\n    const cell = tableRows[0].tableCells[c];\n    allCellInserts.push({ index: cell.content[0].startIndex, text: section.headers[c], rowIndex: 0, colIndex: c, isHeader: true, ok: true, tableStartIndex });\n  }\n  for (let r = 0; r < section.rows.length; r++) {\n    const row = section.rows[r];\n    const cells = section.getCells(row);\n    const ok = section.isOk(row);\n    for (let c = 0; c < section.cols; c++) {\n      const cell = tableRows[r + 1].tableCells[c];\n      allCellInserts.push({ index: cell.content[0].startIndex, text: cells[c], rowIndex: r + 1, colIndex: c, isHeader: false, ok, tableStartIndex });\n    }\n  }\n}\n\n// Глобальная сортировка — все ячейки обеих таблиц вместе\nallCellInserts.sort((a, b) => b.index - a.index);\n\nconst insertRequests = [];\nfor (const ci of allCellInserts) {\n  insertRequests.push({ insertText: { location: { index: ci.index }, text: ci.text } });\n  colorMeta.push({ rowIndex: ci.rowIndex, colIndex: ci.colIndex, isHeader: ci.isHeader, ok: ci.ok, tableStartIndex: ci.tableStartIndex });\n}\n\nconst thesisText = '\\n\\nСТРУКТУРА И ТЕЗИСЫ:\\n' +\n  data.thesisRows.map(r => `${r.ok ? '✅' : '❌'} ${r.label}`).join('\\n');\n\nreturn [{ json: {\n  documentId: data.documentId,\n  requestsJson: JSON.stringify({ requests: insertRequests }),\n  colorMeta: JSON.stringify(colorMeta),\n  thesisText,\n  docUrl: data.docUrl,\n  rowNumber: data.rowNumber,\n  originalH1: data.originalH1\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        208
+      ],
+      "id": "b7415f22-d97a-4bbb-b944-d2b0b41d4c75",
+      "name": "Заполняем таблицы2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        128,
+        208
+      ],
+      "id": "507ac772-fbb8-4e46-9b0e-57d42904164c",
+      "name": "Таблица1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $('Отчет').item.json.documentId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        304,
+        208
+      ],
+      "id": "8308799f-ab5d-4c5b-93d9-21ce557f2030",
+      "name": "Читаем документ ",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        688,
+        208
+      ],
+      "id": "871e1d6a-2d72-48c5-9006-6504ec8fbfd6",
+      "name": "Таблица2",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $('Отчет').item.json.documentId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        864,
+        208
+      ],
+      "id": "a28f7d28-57d1-4328-9b3a-eb24341cf82d",
+      "name": "Читаем документ 3",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1216,
+        208
+      ],
+      "id": "f8c5f318-0e6d-458a-8647-491b98a0dbd1",
+      "name": "Заполняем",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('Заполняем таблицы2').item.json;\n\nreturn [{ json: {\n  documentId: prev.documentId,\n  requestsJson: JSON.stringify({ requests: [{\n    insertText: {\n      endOfSegmentLocation: { segmentId: '' },\n      text: prev.thesisText\n    }\n  }]}),\n  colorMeta: prev.colorMeta,\n  docUrl: prev.docUrl,\n  rowNumber: prev.rowNumber,\n  originalH1: prev.originalH1\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        208
+      ],
+      "id": "8cf880c3-ac05-4d97-9e59-bd85a63b79ea",
+      "name": "Тезисы"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $('Заполняем таблицы2').item.json.documentId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.requestsJson }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1568,
+        208
+      ],
+      "id": "f223b524-01e2-4747-80b0-331193cc293e",
+      "name": "Post Тезисы",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "REernUZwFdyG0YaB",
+          "name": "Google Docs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "17DWV3w_bQFE4n1_Q0Qz9LGJKgFgRNlZRgZQcBIV9IBU",
+          "mode": "list",
+          "cachedResultName": "MDC-SEO-ТЗ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17DWV3w_bQFE4n1_Q0Qz9LGJKgFgRNlZRgZQcBIV9IBU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "kt-domodedovo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17DWV3w_bQFE4n1_Q0Qz9LGJKgFgRNlZRgZQcBIV9IBU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "H1 (главный ключ)": "={{ $('Заполняем таблицы2').item.json.originalH1 }}",
+            "Копирайт": "=https://docs.google.com/document/d/{{ $('GDoc').first().json.id }}/edit"
+          },
+          "matchingColumns": [
+            "H1 (главный ключ)"
+          ],
+          "schema": [
+            {
+              "id": "№",
+              "displayName": "№",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "H1 (главный ключ)",
+              "displayName": "H1 (главный ключ)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Тип",
+              "displayName": "Тип",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ключевые",
+              "displayName": "Ключевые",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Нейроанализ",
+              "displayName": "Нейроанализ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Конкуренты ТОП-10",
+              "displayName": "Конкуренты ТОП-10",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ТЗ",
+              "displayName": "ТЗ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Копирайт",
+              "displayName": "Копирайт",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1728,
+        208
+      ],
+      "id": "6eb5be0a-a110-4695-ac47-d7e0831480b1",
+      "name": "Записываем ссылку",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Старт": {
+      "main": [
+        [
+          {
+            "node": "Supabase connect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets — Читаем строки": {
+      "main": [
+        [
+          {
+            "node": "Loop — По строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop — По строкам": {
+      "main": [
+        [
+          {
+            "node": "Code — Извлекаем ID документа",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code — Извлекаем ID документа",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Извлекаем ID документа": {
+      "main": [
+        [
+          {
+            "node": "Docs — Читаем ТЗ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Docs — Читаем ТЗ": {
+      "main": [
+        [
+          {
+            "node": "Code — Парсим ТЗ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Парсим ТЗ": {
+      "main": [
+        [
+          {
+            "node": "N-граммы",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model — Claude Sonnet 4.5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Писатель",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model — Gemini Flash (Редактор)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Редактор",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model — Gemini Flash (Проверка)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Проверка ТЗ",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase connect": {
+      "main": [
+        [
+          {
+            "node": "Sheets — Читаем строки",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "N-граммы": {
+      "main": [
+        [
+          {
+            "node": "Писатель",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Писатель": {
+      "main": [
+        [
+          {
+            "node": "Редактор",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Готовим контент": {
+      "main": [
+        [
+          {
+            "node": "GDoc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Редактор": {
+      "main": [
+        [
+          {
+            "node": "Проверка частот",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка ТЗ": {
+      "main": [
+        [
+          {
+            "node": "Готовим контент",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GDoc": {
+      "main": [
+        [
+          {
+            "node": "Парсим Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Парсим Markdown": {
+      "main": [
+        [
+          {
+            "node": "BatchUpdate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BatchUpdate": {
+      "main": [
+        [
+          {
+            "node": "Собираем фразы для AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Собираем фразы для AI": {
+      "main": [
+        [
+          {
+            "node": "Готовим запрос Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Готовим запрос Gemini": {
+      "main": [
+        [
+          {
+            "node": "Анализ ключей",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Анализ ключей": {
+      "main": [
+        [
+          {
+            "node": "Парсим ответ Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Парсим ответ Gemini": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Подсветка",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подсветка": {
+      "main": [
+        [
+          {
+            "node": "Подсвечиваем",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка частот": {
+      "main": [
+        [
+          {
+            "node": "Корректор",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Корректор": {
+      "main": [
+        [
+          {
+            "node": "Проверка ТЗ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model — Claude Sonnet 4.": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Корректор",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Подсвечиваем": {
+      "main": [
+        [
+          {
+            "node": "Отчет",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отчет": {
+      "main": [
+        [
+          {
+            "node": "Читаем документ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем документ": {
+      "main": [
+        [
+          {
+            "node": "Вставляем таблицу1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Вставляем таблицу1": {
+      "main": [
+        [
+          {
+            "node": "Таблица1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Вставляем таблицу 2": {
+      "main": [
+        [
+          {
+            "node": "Таблица2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Таблица1": {
+      "main": [
+        [
+          {
+            "node": "Читаем документ ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем документ ": {
+      "main": [
+        [
+          {
+            "node": "Вставляем таблицу 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Таблица2": {
+      "main": [
+        [
+          {
+            "node": "Читаем документ 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем документ 3": {
+      "main": [
+        [
+          {
+            "node": "Заполняем таблицы2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Заполняем таблицы2": {
+      "main": [
+        [
+          {
+            "node": "Заполняем",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Заполняем": {
+      "main": [
+        [
+          {
+            "node": "Тезисы",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Тезисы": {
+      "main": [
+        [
+          {
+            "node": "Post Тезисы",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Тезисы": {
+      "main": [
+        [
+          {
+            "node": "Записываем ссылку",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Записываем ссылку": {
+      "main": [
+        [
+          {
+            "node": "Loop — По строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b0c0a954-f782-4c83-aa4e-f3e4f4860ce9",
+  "activeVersionId": null,
+  "versionCounter": 93,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-12T11:08:40.161Z",
+      "createdAt": "2026-03-12T11:08:40.161Z",
+      "role": "workflow:owner",
+      "workflowId": "NCF0IG2RetjoqZpZ",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

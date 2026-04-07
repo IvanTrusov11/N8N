@@ -1,0 +1,535 @@
+{
+  "updatedAt": "2026-04-01T09:20:25.524Z",
+  "createdAt": "2026-03-27T11:54:56.131Z",
+  "id": "M4nPS1Q29cL8Um7O",
+  "name": "Wordstat — Бассейны",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c8f33e04-6531-4c7b-9c93-29e6e5c35435",
+      "name": "Запуск",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        4016,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-token",
+              "name": "yandex_token",
+              "value": "y0__xDtz-juAhih_z4g5KHd4RYBSLneGBtXmFadx9pLOlvg02qCYg",
+              "type": "string"
+            },
+            {
+              "id": "cfg-minus",
+              "name": "minus_words",
+              "value": "официальный,сайт,отзывы,социальный,как,номера,доехать,добраться,2025,где,фото,пенсионер,адрес,телефон,карта,2024,2023,2025,2022,шведский,стол,хороший,лучший,длина,ширина,рейтинг,отзыв,питание,включено,всё,все,все включено,большой,маленкий,звезд,звёзд",
+              "type": "string"
+            },
+            {
+              "id": "cfg-regions",
+              "name": "regions",
+              "value": "225",
+              "type": "string"
+            },
+            {
+              "id": "cfg-limit",
+              "name": "top_limit",
+              "value": 5,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2c6be57a-f13a-49d9-b828-d7f69dc5c479",
+      "name": "Конфиг",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4176,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Пробивка спроса: Бассейны",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "26b76c60-09a0-48b4-854b-80d615087f35",
+      "name": "Читаем таблицу",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4352,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "739fe9b2-aa2a-47c0-8b00-83e9eb5775df",
+      "name": "Loop по строкам",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4736,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.wordstat.yandex.net/v1/topRequests",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Конфиг').first().json.yandex_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ phrase: $json['Ключевой запрос'], regions: $('Конфиг').first().json.regions.split(',').map(Number) }) }}",
+        "options": {}
+      },
+      "id": "7ce17df1-86d6-482c-82aa-5ba66e72f747",
+      "name": "Wordstat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5104,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const minusStr = $('Конфиг').first().json.minus_words || '';\nconst minusWords = minusStr\n  .split(',')\n  .map(w => w.trim().toLowerCase())\n  .filter(w => w.length > 0);\n\nconst topLimit = Number($('Конфиг').first().json.top_limit) || 10;\n\nconst currentRow = $('Loop по строкам').item.json;\nconst clusterName = currentRow['Ключевой запрос'] || '';\nconst geo = currentRow['ГЕО'] || '';\n\nconst labelMap = {\n  'бассейн открытый':                     'Открытый',\n  'бассейн морская вода':                 'Морская вода',\n  'бассейн минеральная вода':             'Минеральная вода',\n  'бассейн детский':                      'Детский',\n  'бассейн (термальная вода|термальный)': 'Термальная вода',\n  'бассейн (подогрев|подогреваемый)':     'Подогрев',\n};\n\nlet shortLabel = clusterName;\nfor (const [key, label] of Object.entries(labelMap)) {\n  if (clusterName.includes(key)) {\n    shortLabel = label;\n    break;\n  }\n}\n\nconst clusterHeader = `${geo} + ${shortLabel}`;\n\nconst apiResponse = $input.first().json;\nconst topRequests = apiResponse.topRequests || [];\n\nconst filtered = topRequests.filter(item => {\n  const phrase = item.phrase.toLowerCase();\n  return !minusWords.some(minus => phrase.includes(minus));\n});\n\nconst limited = filtered.slice(0, topLimit);\n\nconst rows = [];\n\nrows.push({\n  json: {\n    запрос: clusterHeader,\n    частотность: ''\n  }\n});\n\nif (limited.length === 0) {\n  rows.push({\n    json: {\n      запрос: '— нет данных —',\n      частотность: ''\n    }\n  });\n} else {\n  for (const item of limited) {\n    rows.push({\n      json: {\n        запрос: item.phrase,\n        частотность: item.count\n      }\n    });\n  }\n}\n\nrows.push({\n  json: {\n    запрос: '',\n    частотность: ''\n  }\n});\n\nreturn rows;"
+      },
+      "id": "71eeb7ef-5f76-44a3-ac14-54ff8c05aa20",
+      "name": "Фильтр + форматирование",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5264,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Пробивка спроса: Бассейны",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1807593277,
+          "mode": "list",
+          "cachedResultName": "Лист4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit#gid=1807593277"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ключевой запрос": "={{ $json.запрос }}",
+            "Спрос": "={{ $json.частотность }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Ключевой запрос",
+              "displayName": "Ключевой запрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Спрос",
+              "displayName": "Спрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e64f7852-e8ac-4bd8-b507-a3d5c930bceb",
+      "name": "Пишем результат",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5424,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "seconds"
+      },
+      "id": "bed85270-8cb2-43db-8654-37a02e1ecdfc",
+      "name": "⏱️ Wait 1 сек",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        4944,
+        400
+      ],
+      "webhookId": "672c0919-ff6c-4b6a-afd4-f64b9a2b1e0f"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition-status",
+              "leftValue": "={{ $json['Статус'] }}",
+              "rightValue": "Готово",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2e809739-6ea9-49fe-b3df-58af62fe4356",
+      "name": "Не обработан?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Пробивка спроса: Бассейны",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10pyshWnwhMhnkjzt1_OstuJozVVq_TlAJewp76Roe0Q/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ключевой запрос": "={{ $json._query_to_update }}",
+            "Статус": "Готово"
+          },
+          "matchingColumns": [
+            "Ключевой запрос"
+          ],
+          "schema": [
+            {
+              "id": "ГЕО",
+              "displayName": "ГЕО",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ключевой запрос",
+              "displayName": "Ключевой запрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Статус",
+              "displayName": "Статус",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Вложенность",
+              "displayName": "Вложенность",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "de565cb5-de21-40aa-9919-74092c8d2c86",
+      "name": "Статус",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5760,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $('Loop по строкам').item.json['Ключевой запрос'];\nreturn [{ json: { _query_to_update: query } }];"
+      },
+      "id": "fb696af8-a4e8-490b-a718-d38f8577722d",
+      "name": "Готовим обновление",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5584,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Запуск": {
+      "main": [
+        [
+          {
+            "node": "Конфиг",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Конфиг": {
+      "main": [
+        [
+          {
+            "node": "Читаем таблицу",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем таблицу": {
+      "main": [
+        [
+          {
+            "node": "Не обработан?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop по строкам": {
+      "main": [
+        [
+          {
+            "node": "⏱️ Wait 1 сек",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⏱️ Wait 1 сек",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wordstat API": {
+      "main": [
+        [
+          {
+            "node": "Фильтр + форматирование",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Фильтр + форматирование": {
+      "main": [
+        [
+          {
+            "node": "Пишем результат",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Пишем результат": {
+      "main": [
+        [
+          {
+            "node": "Готовим обновление",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱️ Wait 1 сек": {
+      "main": [
+        [
+          {
+            "node": "Wordstat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Не обработан?": {
+      "main": [
+        [
+          {
+            "node": "Loop по строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Статус": {
+      "main": [
+        [
+          {
+            "node": "Loop по строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Готовим обновление": {
+      "main": [
+        [
+          {
+            "node": "Статус",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "d812c023-cd4c-4724-b998-ea8117d006e3",
+  "activeVersionId": null,
+  "versionCounter": 34,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T11:54:56.137Z",
+      "createdAt": "2026-03-27T11:54:56.137Z",
+      "role": "workflow:owner",
+      "workflowId": "M4nPS1Q29cL8Um7O",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

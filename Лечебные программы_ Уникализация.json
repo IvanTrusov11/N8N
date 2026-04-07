@@ -1,0 +1,376 @@
+{
+  "updatedAt": "2026-03-04T08:35:36.160Z",
+  "createdAt": "2026-02-15T21:28:22.120Z",
+  "id": "8C2XZpozuFqWp7AT",
+  "name": "Лечебные программы: Уникализация",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        128
+      ],
+      "id": "4650893e-3f62-4a7f-a77f-f1c532f7c3fa",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Уникализация лечебных программ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 303467128,
+          "mode": "list",
+          "cachedResultName": "Лист2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo/edit#gid=303467128"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "text_rerait"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        128
+      ],
+      "id": "7fea5af4-b5c7-4b71-9d22-4590b066f31e",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — экспертный медицинский копирайтер туроператора. Твоя задача: сделать глубокий рерайт программы санатория \"{{ $json.name }}\", сохранив смысл и структуру, но удалив любую HTML-разметку.\n\nИСХОДНЫЙ ТЕКСТ:\n{{ $json.description }}\n\nЖЕСТКОЕ ТРЕБОВАНИЕ: \nВыдавай ТОЛЬКО ЧИСТЫЙ ТЕКСТ. Использование любых HTML-тегов (типа <h1>, <p>, <table>, <td>, <br>) КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО. За нарушение — отказ в приеме работы.\n\nПРАВИЛА ФОРМАТИРОВАНИЯ ТЕКСТА:\n1. ЗАГОЛОВКИ: Пиши заглавными буквами (например: ОПИСАНИЕ ПРОГРАММЫ, ОЖИДАЕМЫЙ ЭФФЕКТ).\n2. СПИСКИ: Используй обычный дефис \"-\" или буллит \"•\" в начале строки.\n3. ТАБЛИЦЫ: Преврати содержимое таблиц в структурированный текстовый список. Сначала пиши название блока (например: ДИАГНОСТИЧЕСКИЙ БЛОК), а затем перечисляй процедуры с новой строки.\n4. РАЗДЕЛИТЕЛИ: Используй двойной перенос строки между логическими блоками для читабельности.\n\nПРАВИЛА РЕРАЙТА ДЛЯ УНИКАЛЬНОСТИ:\n1. ГЛУБИНА: Перепиши каждое предложение. Не делай простую замену слов. Изменяй структуру фраз, сохраняя 100% медицинский смысл.\n2. ТЕРМИНЫ: Названия медицинских процедур (Магнитотурботрон, Озонотерапия, УВЧ и т.д.) оставляй КАК ЕСТЬ. Это ключевые данные.\n3. ПОКАЗАНИЯ И ЭФФЕКТЫ: Перефразируй пункты списков максимально глубоко. Вместо \"укрепление иммунитета\" пиши \"повышение сопротивляемости организма инфекциям\" и т.д.\n4. СТИЛЬ: Профессиональный, экспертный, приглашающий. Без \"воды\" и рекламной чепухи.\n\nВАЖНО: Результат должен быть пригоден для прямой вставки в текстовую ячейку таблицы. Объем: примерно как в оригинале.\n\nВЫДАЙ ТОЛЬКО ТЕКСТ. НИКАКИХ КОММЕНТАРИЕВ ОТ СЕБЯ.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "3e50a96f-646d-424a-b064-89c3df342287",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Уникализация лечебных программ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 303467128,
+          "mode": "list",
+          "cachedResultName": "Лист2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M-spQMolvjqZaNu9Z3NbwRIizMBtSV-_T2djMSpZKjo/edit#gid=303467128"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Loop Over Items').item.json.id }}",
+            "text_rerait": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_published",
+              "displayName": "is_published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "media_collection_id",
+              "displayName": "media_collection_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "order",
+              "displayName": "order",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "hotel_id",
+              "displayName": "hotel_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "text_rerait",
+              "displayName": "text_rerait",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        352,
+        128
+      ],
+      "id": "1dd2e993-acaa-4ab0-840b-fd3ebf33de66",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        128
+      ],
+      "id": "19492546-0000-4716-931c-c9c73780f54c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-sonnet-4.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "99261dee-d4fc-489b-bb95-08a3d7dcaeec",
+      "name": "Claude",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SJfOtcHEhZz2rEvu",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        368
+      ],
+      "id": "f732078d-b2bc-4648-b6ed-ec081c225c5b",
+      "name": "Free",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fGthAQoE0jOmscoH",
+          "name": "Google Gemini_№1"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "06098d7b-ff6e-444a-a285-18d057983e90",
+  "activeVersionId": null,
+  "versionCounter": 11,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-15T21:28:22.125Z",
+      "createdAt": "2026-02-15T21:28:22.125Z",
+      "role": "workflow:owner",
+      "workflowId": "8C2XZpozuFqWp7AT",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "updatedAt": "2026-03-16T16:30:34.185Z",
+  "createdAt": "2026-02-01T13:00:53.794Z",
+  "id": "uXOB4JqeCaBYFDM7",
+  "name": "MDC - Google Indexing API",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 2,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "name": "Schedule - Every Sunday 2AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        448
+      ],
+      "id": "e410e90e-35fc-422d-8612-862dbed3bde2"
+    },
+    {
+      "parameters": {
+        "command": "cd /data/projects/KT-DMD && node index.js"
+      },
+      "name": "KT-DMD",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        80,
+        288
+      ],
+      "id": "d2da7f6e-532a-47ab-a1e6-4b2f79de9d61"
+    },
+    {
+      "parameters": {
+        "command": "cd /data/projects/Mrtmo_GI && node index.js"
+      },
+      "name": "MrtMo",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        80,
+        448
+      ],
+      "id": "e89b4b8c-4959-4593-bd87-5a273223b9e7"
+    },
+    {
+      "parameters": {
+        "command": "cd /data/projects/MDC_GI && node index.js"
+      },
+      "name": "MdcMrt",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        80,
+        624
+      ],
+      "id": "e5a02f0b-a661-40db-9a7a-e75a9e1376fe"
+    },
+    {
+      "parameters": {
+        "command": "=URLS_COUNT=$(echo \"{{$node[\"MrtMo\"].json[\"stdout\"]}}\" | grep -c \"✓\") && if [ {{$node[\"MrtMo\"].json[\"exitCode\"]}} -eq 0 ]; then echo \"$(date '+%Y-%m-%d %H:%M:%S') | ✅ SUCCESS | URLs sent: $URLS_COUNT\" >> /data/projects/Mrtmo_GI/indexing.log; else echo \"$(date '+%Y-%m-%d %H:%M:%S') | ❌ ERROR | Failed\" >> /data/projects/Mrtmo_GI/indexing.log; fi"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        256,
+        448
+      ],
+      "id": "99a9c192-dc35-4feb-83d0-925a6e8711ab",
+      "name": "MrtMo__Log"
+    },
+    {
+      "parameters": {
+        "command": "=URLS_COUNT=$(echo \"{{$node[\"KT-DMD\"].json[\"stdout\"]}}\" | grep -c \"HTTP/1.1 200\") && if [ {{$node[\"KT-DMD\"].json[\"exitCode\"]}} -eq 0 ]; then echo \"$(date '+%Y-%m-%d %H:%M:%S') | ✅ SUCCESS | URLs sent: $URLS_COUNT\" >> /data/projects/KT-DMD/indexing.log; else echo \"$(date '+%Y-%m-%d %H:%M:%S') | ❌ ERROR | Failed\" >> /data/projects/KT-DMD/indexing.log; fi"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        256,
+        288
+      ],
+      "id": "7315f6a0-b14e-4031-9004-0fecc16c70a9",
+      "name": "KT-DMD__Log"
+    },
+    {
+      "parameters": {
+        "command": "=URLS_COUNT=$(echo \"{{$node[\"MdcMrt\"].json[\"stdout\"]}}\" | grep -c \"✓\") && if [ {{$node[\"MdcMrt\"].json[\"exitCode\"]}} -eq 0 ]; then echo \"$(date '+%Y-%m-%d %H:%M:%S') | ✅ SUCCESS | URLs sent: $URLS_COUNT\" >> /data/projects/MDC_GI/indexing.log; else echo \"$(date '+%Y-%m-%d %H:%M:%S') | ❌ ERROR | Failed\" >> /data/projects/MDC_GI/indexing.log; fi"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        256,
+        624
+      ],
+      "id": "db07d74a-627b-463f-aaae-4df299c222de",
+      "name": "MdcMrt__Log"
+    }
+  ],
+  "connections": {
+    "Schedule - Every Sunday 2AM": {
+      "main": [
+        [
+          {
+            "node": "KT-DMD",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MrtMo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MdcMrt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KT-DMD": {
+      "main": [
+        [
+          {
+            "node": "KT-DMD__Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MrtMo": {
+      "main": [
+        [
+          {
+            "node": "MrtMo__Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MdcMrt": {
+      "main": [
+        [
+          {
+            "node": "MdcMrt__Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Schedule - Every Sunday 2AM": {
+      "recurrenceRules": [
+        15
+      ]
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "f3f30c7f-5e99-4489-87a1-2caf4df41b63",
+  "activeVersionId": "f3f30c7f-5e99-4489-87a1-2caf4df41b63",
+  "versionCounter": 49,
+  "triggerCount": 1,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-01T13:00:53.802Z",
+      "createdAt": "2026-02-01T13:00:53.802Z",
+      "role": "workflow:owner",
+      "workflowId": "uXOB4JqeCaBYFDM7",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

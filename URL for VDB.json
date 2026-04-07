@@ -1,0 +1,842 @@
+{
+  "updatedAt": "2026-03-20T09:19:20.577Z",
+  "createdAt": "2026-02-22T19:45:34.626Z",
+  "id": "wkFwRcVyXfqhQv1q",
+  "name": "URL for VDB",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $('Get row(s) in sheet').item.json.URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 YaBrowser/25.6.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        176
+      ],
+      "id": "b869decf-eb75-4827-a673-5e3cb468267a",
+      "name": "Первая итерация парсинга",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer fc-46924d8d152143e18beb448b27c2c5f9"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('Get row(s) in sheet').item.json.URL }}\",\n  \"formats\": [\n    \"html\"\n  ],\n  \"onlyMainContent\": true,\n  \"excludeTags\": [\n    \"header\",\n    \" footer\",\n    \" nav\",\n    \" aside\",\n    \" menu\",\n    \" form\",\n    \" script\",\n    \" style\",\n    \" noscript\",\n    \" iframe\",\n    \" object\",\n    \" embed\",\n    \" link\",\n    \" input\",\n    \" select\",\n    \" textarea\",\n    \" button\",\n    \" figure\",\n    \" figcaption\",\n    \" svg\",\n    \" canvas\",\n    \" details\",\n    \" summary\",\n    \" dialog\",\n    \" schema\",\n    \" a\",\n    \" img\",\n    \" main\"\n  ],\n  \"parsePDF\": true,\n  \"waitFor\": 3000,\n  \"timeout\": 30000,\n  \"maxAge\": 14400000\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        288
+      ],
+      "id": "8b919a00-0129-41a8-ba66-4ffc748ceb6b",
+      "name": "FireCrawl",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data }}",
+        "options": {
+          "ignore": "header, footer, nav, aside, menu, form, script, style, noscript, iframe, object, embed, link, input, select, textarea, button, figure, figcaption, svg, canvas, details, summary, dialog, schema, a, img, main"
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "30a999c9-589b-4add-8313-ee4ef7626d4e",
+      "name": "Получаем чистенькие тексты",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk",
+          "mode": "list",
+          "cachedResultName": "Формирование БД на основе ТОП-10 выдачи ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1341050052,
+          "mode": "list",
+          "cachedResultName": "Новые уроки",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit#gid=1341050052"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Добавлен в бд"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -1104,
+        768
+      ],
+      "id": "cde49f7e-9a35-4123-9557-5aaa071763c5",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Исходные данные\nconst text = $json.data; // исходный текст\nconst minSize = 800;\nconst maxSize = 1200;\nconst url = $('Get row(s) in sheet').first().json.URL; // URL из другого нода\n\n// Шаг 1: Разбиваем текст на секции по заголовкам (без изменений, эта часть работает корректно)\nconst sections = [];\nconst lines = text.split('\\n');\nlet currentSection = '';\nfor (let line of lines) {\n  // Если строка - это заголовок и текущая секция не пустая, сохраняем секцию\n  if (/^#{1,6} /.test(line) && currentSection.trim()) {\n    sections.push(currentSection.trim());\n    currentSection = line; // Начинаем новую секцию с этого заголовка\n  } else {\n    currentSection += '\\n' + line;\n  }\n}\n// Не забываем добавить последнюю секцию\nif (currentSection.trim()) {\n  sections.push(currentSection.trim());\n}\n\n// Шаг 2: Объединяем секции в чанки с умным контролем размера и разбивкой\nconst chunks = [];\nlet buffer = '';\n\nfor (const section of sections) {\n  // Если добавление новой секции превысит лимит И буфер не пустой\n  if (buffer && (buffer + '\\n' + section).length > maxSize) {\n    // Сохраняем текущий буфер как чанк, если он соответствует minSize\n    if (buffer.length >= minSize) {\n      chunks.push(buffer.trim());\n      buffer = ''; // Очищаем буфер\n    }\n  }\n\n  // Добавляем новую секцию в буфер (или начинаем новый буфер)\n  // Используем '?' для аккуратного добавления разделителя\n  buffer = buffer ? buffer + '\\n' + section : section;\n\n  // ГЛАВНОЕ ИЗМЕНЕНИЕ: Цикл для разбивки слишком большого буфера\n  // Если буфер теперь превышает maxSize (из-за большой секции), режем его на части\n  while (buffer.length > maxSize) {\n    // Ищем последнее место для \"красивого\" разрыва (по переносу строки) в пределах maxSize\n    let splitPos = buffer.lastIndexOf('\\n', maxSize);\n    \n    // Если переносов строки не нашлось, придется резать \"по живому\"\n    if (splitPos === -1) {\n      splitPos = maxSize;\n    }\n    \n    // Отрезаем чанк и добавляем в массив\n    chunks.push(buffer.substring(0, splitPos).trim());\n    \n    // Оставшаяся часть становится новым буфером\n    buffer = buffer.substring(splitPos).trim();\n  }\n}\n\n// Добавляем последний оставшийся в буфере чанк, если он есть\nif (buffer.trim()) {\n  // Даже если он меньше minSize, лучше добавить его, чем потерять данные\n  chunks.push(buffer.trim());\n}\n\n// Шаг 3: Возвращаем чанки с URL (без изменений)\nreturn chunks.map((chunk, index) => ({\n  json: {\n    chunk_number: index + 1,\n    content: chunk,\n    url: url\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        16
+      ],
+      "id": "64dd52e4-4b17-4e15-b571-1db192424dfd",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "URL",
+                "value": "={{ $json.url }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        512
+      ],
+      "id": "22efb47c-ba02-4e66-aa34-872e3aee3ab4",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "kotenkovseo",
+          "mode": "list",
+          "cachedResultName": "kotenkovseo"
+        },
+        "embeddingBatchSize": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1328,
+        288
+      ],
+      "id": "eb01dc4c-1bb8-4b3a-a983-4993af2608ca",
+      "name": "Supabase Vector Store"
+    },
+    {
+      "parameters": {
+        "chunkSize": 30000,
+        "chunkOverlap": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        720
+      ],
+      "id": "841a58b6-b10b-48f2-a7de-6ce2141fd81d",
+      "name": "Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -944,
+        240
+      ],
+      "id": "41014c0b-6a1a-4862-8295-921725c9f3f6",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        512
+      ],
+      "id": "dd9300e2-8da8-4e76-9b54-15d2881337a9",
+      "name": "Embeddings OpenAI"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk",
+          "mode": "list",
+          "cachedResultName": "Формирование БД на основе ТОП-10 выдачи ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1341050052,
+          "mode": "list",
+          "cachedResultName": "Новые уроки",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit#gid=1341050052"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Добавлен в бд": "да",
+            "URL": "={{ $json.URL }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Добавлен в бд",
+              "displayName": "Добавлен в бд",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -624,
+        128
+      ],
+      "id": "ff923150-20b7-4eac-aa7f-31d6d070caa2",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data.html }}",
+        "options": {
+          "ignore": "header, footer, nav, aside, menu, form, script, style, noscript, iframe, object, embed, link, input, select, textarea, button, figure, figcaption, svg, canvas, details, summary, dialog, schema, a, img, main"
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        880,
+        96
+      ],
+      "id": "cbb178b2-048e-47b7-9c56-2775aa6a3673",
+      "name": "Получаем чистенькие тексты1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1dab0f75-86d2-485a-b1f9-f91181b8a97e",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "45695b31-2a68-4dfe-b806-2d98b3fe0155",
+      "name": "Проверка на JS сайт"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        224
+      ],
+      "id": "6a224808-b232-4114-b641-3c4c73b62ae1",
+      "name": "Ожидание, чтобы избежать перегруз API",
+      "webhookId": "d5ce48ac-5cf3-417d-becd-504c3cfedab0"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1328,
+        768
+      ],
+      "id": "a332e540-9fdb-4edf-bc45-47a37ac2b4b8",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ca56a864-8140-4830-aaad-6b0131c1b523",
+              "leftValue": "={{ $json.data.metadata.statusCode }}",
+              "rightValue": "=^(4|5)\\d{2}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        192
+      ],
+      "id": "4359bbf9-e48e-42d9-98a7-9a51554e4f69",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk",
+          "mode": "list",
+          "cachedResultName": "Формирование БД на основе ТОП-10 выдачи ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1341050052,
+          "mode": "list",
+          "cachedResultName": "Новые уроки",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit#gid=1341050052"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $('Loop Over Items').item.json.URL }}",
+            "Добавлен в бд": "Ошибка"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Добавлен в бд",
+              "displayName": "Добавлен в бд",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        880,
+        288
+      ],
+      "id": "25d4829f-a90e-43a2-a452-e94082d9f4ed",
+      "name": "Запись ошибки",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk",
+          "mode": "list",
+          "cachedResultName": "Формирование БД на основе ТОП-10 выдачи ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1341050052,
+          "mode": "list",
+          "cachedResultName": "Новые уроки",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Cm-IBErrWgIlgz5buJs2NSDnmJ5zmgRQALNpVQiEQPk/edit#gid=1341050052"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ $('Loop Over Items').item.json.URL }}",
+            "Добавлен в бд": "Ошибка"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Добавлен в бд",
+              "displayName": "Добавлен в бд",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        880,
+        496
+      ],
+      "id": "715077e1-441d-459b-9b01-7172f405afe8",
+      "name": "Запись ошибки1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        288
+      ],
+      "id": "b0214fb0-c2a9-4712-bfe3-86c77712a56c",
+      "name": "Wait",
+      "webhookId": "b344b9f9-bf25-478f-bad1-8fb05dbc463e"
+    },
+    {
+      "parameters": {
+        "amount": 1.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        496
+      ],
+      "id": "2de3292c-5410-419b-8b92-3b95e411a1ab",
+      "name": "Wait1",
+      "webhookId": "46746884-9e5d-4512-98ed-c34cc52e5429"
+    }
+  ],
+  "connections": {
+    "Первая итерация парсинга": {
+      "main": [
+        [
+          {
+            "node": "Получаем чистенькие тексты",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FireCrawl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получаем чистенькие тексты": {
+      "main": [
+        [
+          {
+            "node": "Проверка на JS сайт",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Ожидание, чтобы избежать перегруз API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получаем чистенькие тексты1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Проверка на JS сайт": {
+      "main": [
+        [
+          {
+            "node": "FireCrawl",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ожидание, чтобы избежать перегруз API": {
+      "main": [
+        [
+          {
+            "node": "Первая итерация парсинга",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Запись ошибки",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Получаем чистенькие тексты1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запись ошибки": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запись ошибки1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Запись ошибки1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b50854ca-1de8-4019-af81-3441bb714376",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-22T19:45:34.630Z",
+      "createdAt": "2026-02-22T19:45:34.630Z",
+      "role": "workflow:owner",
+      "workflowId": "wkFwRcVyXfqhQv1q",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

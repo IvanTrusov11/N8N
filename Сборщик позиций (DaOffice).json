@@ -1,0 +1,576 @@
+{
+  "updatedAt": "2026-04-05T19:36:36.000Z",
+  "createdAt": "2026-04-05T19:35:24.682Z",
+  "id": "gtePZbmbiGRetNx2",
+  "name": "Сборщик позиций (DaOffice)",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d4569fcb-5bfa-4203-b08f-192ebf0dab50",
+      "name": "Запуск",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2864,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "SPREADSHEET_ID",
+              "value": "1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "INPUT_SHEET",
+              "value": "ALL",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "MAIN_SHEET",
+              "value": "ALL",
+              "type": "string"
+            },
+            {
+              "id": "c4",
+              "name": "YA_SHEET",
+              "value": "Яндекс",
+              "type": "string"
+            },
+            {
+              "id": "c5",
+              "name": "G_SHEET",
+              "value": "Google",
+              "type": "string"
+            },
+            {
+              "id": "c6",
+              "name": "XMLSTOCK_USER",
+              "value": "13817",
+              "type": "string"
+            },
+            {
+              "id": "c7",
+              "name": "XMLSTOCK_KEY",
+              "value": "1430e4ccaebeb27eb65213e93a12ee7c",
+              "type": "string"
+            },
+            {
+              "id": "c8",
+              "name": "YANDEX_REGION",
+              "value": "213",
+              "type": "string"
+            },
+            {
+              "id": "c9",
+              "name": "DELAY_MS",
+              "value": 700,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ae4a8745-28cb-4738-a7e6-0459315d1504",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2704,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Пробивка позиций по сателлитам",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ALL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "4a150c5b-2b4d-4bc2-8a39-40787d7169df",
+      "name": "Читаем ключи",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2544,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.SPREADSHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 74747872,
+          "mode": "list",
+          "cachedResultName": "Яндекс",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit#gid=74747872"
+        },
+        "options": {}
+      },
+      "id": "32d79363-b217-421b-9515-49e821d5b207",
+      "name": "Читаем Яндекс",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2192,
+        912
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.SPREADSHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1495751475,
+          "mode": "list",
+          "cachedResultName": "Google",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit#gid=1495751475"
+        },
+        "options": {}
+      },
+      "id": "ea4904a5-9327-468e-8be6-208ac7e04dc2",
+      "name": "Читаем Google",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2016,
+        912
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Пробивка позиций по сателлитам",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "ALL",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NOjRBbYKbz8NZeurd4ZiHyvxt3hwReK8AmMobds5EFU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "97119f7b-ca35-49de-99b1-9ac8ca579653",
+      "name": "Читаем ALL",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2368,
+        912
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config').first().json;\nconst DOMAIN = 'kurort-expert.ru';\n\nconst now = new Date();\nconst dd  = String(now.getDate()).padStart(2, '0');\nconst mm  = String(now.getMonth() + 1).padStart(2, '0');\nconst dateStr = `${dd}.${mm}`;\n\nfunction colLetter(n) {\n  let r = '';\n  while (n > 0) {\n    n--;\n    r = String.fromCharCode(65 + (n % 26)) + r;\n    n = Math.floor(n / 26);\n  }\n  return r;\n}\n\nconst allRows   = $('Читаем ALL').all();\nlet allColCount = 2;\nif (allRows.length > 0) {\n  const keys = Object.keys(allRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number');\n  allColCount = Math.max(keys.length, 2);\n}\nconst mainYaCol = colLetter(allColCount + 1);\nconst mainGCol  = colLetter(allColCount + 2);\n\nconst yaRows   = $('Читаем Яндекс').all();\nlet yaColCount = 2;\nif (yaRows.length > 0) {\n  const keys = Object.keys(yaRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number');\n  yaColCount = Math.max(keys.length, 2);\n}\nconst yaNextCol = colLetter(yaColCount + 1);\n\nconst gRows   = $('Читаем Google').all();\nlet gColCount = 2;\nif (gRows.length > 0) {\n  const keys = Object.keys(gRows[0].json).filter(k => !k.startsWith('__') && k !== 'row_number');\n  gColCount = Math.max(keys.length, 2);\n}\nconst gNextCol = colLetter(gColCount + 1);\n\nconst isFirstRun = allRows.length === 0;\n\nconst inputRows = $('Читаем ключи').all();\nconst results   = [];\n\nfor (const item of inputRows) {\n  const kw = (item.json['Ключевой запрос'] || '').trim();\n  if (!kw) continue;\n  if (kw === 'Ключевой запрос') continue;\n  if (kw.includes('.рф')) continue;\n\n  results.push({\n    keyword:    kw,\n    demand:     item.json['Спрос'] || '',\n    rowNum:     item.json['row_number'],\n    domain:     DOMAIN,\n    dateStr,\n    mainYaCol, mainGCol,\n    yaNextCol,  gNextCol,\n    isFirstRun,\n    yaUrl: `https://xmlstock.com/yandex/xml/?user=${cfg.XMLSTOCK_USER}&key=${cfg.XMLSTOCK_KEY}&query=${encodeURIComponent(kw)}&lr=${cfg.YANDEX_REGION}&groupby=100`,\n    gUrl:  `https://xmlstock.com/google/xml/?user=${cfg.XMLSTOCK_USER}&key=${cfg.XMLSTOCK_KEY}&query=${encodeURIComponent(kw)}&lr=ru&num=100&hl=ru`\n  });\n}\n\nreturn results.map(r => ({ json: r }));"
+      },
+      "id": "22f16085-dac5-4228-8c3f-b654752960bb",
+      "name": "Prepare Keywords",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1840,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1632,
+        912
+      ],
+      "id": "c1c7a9f6-9b67-4e3f-a4d9-7370bee32e56",
+      "name": "Split"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.yaUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1360,
+        752
+      ],
+      "id": "0613787f-06ba-4e9e-9e5b-7da057e58093",
+      "name": "HTTP Яндекс",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Split').first().json.gUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1184,
+        752
+      ],
+      "id": "5316ac4c-5201-4972-9395-d339bd58b871",
+      "name": "HTTP Google"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function parseXml(xmlStr, domain) {\n  if (!xmlStr || typeof xmlStr !== 'string') return { pos: null, url: null };\n  const docs = xmlStr.match(/<doc[\\s\\S]*?<\\/doc>/g) || [];\n  for (let j = 0; j < docs.length; j++) {\n    const um = docs[j].match(/<url[^>]*>([^<]+)<\\/url>/);\n    if (um && um[1].toLowerCase().includes(domain.toLowerCase())) {\n      return { pos: j + 1, url: um[1].trim() };\n    }\n  }\n  return { pos: null, url: null };\n}\n\nconst meta = $('Split').item.json;\nconst yaXml  = $('HTTP Яндекс').first().json.data || '';\nconst gXml   = $('HTTP Google').first().json.data || '';\n\nconst parsedY = parseXml(yaXml, meta.domain);\nconst parsedG = parseXml(gXml,  meta.domain);\n\nreturn [{\n  json: {\n    keyword:    meta.keyword,\n    demand:     meta.demand,\n    rowNum:     meta.rowNum,\n    domain:     meta.domain,\n    dateStr:    meta.dateStr,\n    mainYaCol:  meta.mainYaCol,\n    mainGCol:   meta.mainGCol,\n    yaNextCol:  meta.yaNextCol,\n    gNextCol:   meta.gNextCol,\n    isFirstRun: meta.isFirstRun,\n    yPos: parsedY.pos,\n    yUrl: parsedY.url,\n    gPos: parsedG.pos,\n    gUrl: parsedG.url,\n  }\n}];"
+      },
+      "id": "257e5427-2834-403e-b413-93c1e782d8d6",
+      "name": "Parse Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        896
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst results = $input.all().map(i => i.json);\nif (!results.length) return [];\n\nconst cfg = $('Config').first().json;\nconst sheet  = cfg.MAIN_SHEET;\nconst yaCol  = results[0].mainYaCol;\nconst gCol   = results[0].mainGCol;\nconst date   = results[0].dateStr;\nconst isFirst = results[0].isFirstRun;\n\nconst data = [];\n\nif (isFirst) {\n  data.push({ range: `${sheet}!A1`, values: [['Ключевой запрос']] });\n  data.push({ range: `${sheet}!B1`, values: [['Спрос']] });\n  for (const r of results) {\n    data.push({ range: `${sheet}!A${r.rowNum}`, values: [[r.keyword]] });\n    data.push({ range: `${sheet}!B${r.rowNum}`, values: [[r.demand]] });\n  }\n}\n\ndata.push({ range: `${sheet}!${yaCol}1`, values: [[`Я ${date}`]] });\ndata.push({ range: `${sheet}!${gCol}1`,  values: [[`G ${date}`]] });\n\nfor (const r of results) {\n  const yVal = r.yPos\n    ? `=HYPERLINK(\"${r.yUrl}\";\"${r.yPos}\")`\n    : '—';\n  const gVal = r.gPos\n    ? `=HYPERLINK(\"${r.gUrl}\";\"${r.gPos}\")`\n    : '—';\n  data.push({ range: `${sheet}!${yaCol}${r.rowNum}`, values: [[yVal]] });\n  data.push({ range: `${sheet}!${gCol}${r.rowNum}`,  values: [[gVal]] });\n}\n\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data } } }];\n"
+      },
+      "id": "1a37ebb4-3901-4097-92bc-2f1625e54537",
+      "name": "Body Main1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst results = $input.all().map(i => i.json);\nif (!results.length) return [];\n\nconst cfg   = $('Config').first().json;\nconst sheet  = cfg.YA_SHEET;\nconst col    = results[0].yaNextCol;\nconst date   = results[0].dateStr;\nconst isFirst = results[0].isFirstRun;\n\nconst data = [];\n\nif (isFirst) {\n  data.push({ range: `${sheet}!A1`, values: [['Ключевой запрос']] });\n  data.push({ range: `${sheet}!B1`, values: [['Спрос']] });\n  for (const r of results) {\n    data.push({ range: `${sheet}!A${r.rowNum}`, values: [[r.keyword]] });\n    data.push({ range: `${sheet}!B${r.rowNum}`, values: [[r.demand]] });\n  }\n}\n\ndata.push({ range: `${sheet}!${col}1`, values: [[date]] });\n\nfor (const r of results) {\n  const val = r.yPos\n    ? `=HYPERLINK(\"${r.yUrl}\";\"${r.yPos}\")`\n    : '—';\n  data.push({ range: `${sheet}!${col}${r.rowNum}`, values: [[val]] });\n}\n\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data } } }];\n"
+      },
+      "id": "6b8c0bf4-6346-4541-acd1-d76c0d20d1bd",
+      "name": "Body Яндекс1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst results = $input.all().map(i => i.json);\nif (!results.length) return [];\n\nconst cfg   = $('Config').first().json;\nconst sheet  = cfg.G_SHEET;\nconst col    = results[0].gNextCol;\nconst date   = results[0].dateStr;\nconst isFirst = results[0].isFirstRun;\n\nconst data = [];\n\nif (isFirst) {\n  data.push({ range: `${sheet}!A1`, values: [['Ключевой запрос']] });\n  data.push({ range: `${sheet}!B1`, values: [['Спрос']] });\n  for (const r of results) {\n    data.push({ range: `${sheet}!A${r.rowNum}`, values: [[r.keyword]] });\n    data.push({ range: `${sheet}!B${r.rowNum}`, values: [[r.demand]] });\n  }\n}\n\ndata.push({ range: `${sheet}!${col}1`, values: [[date]] });\n\nfor (const r of results) {\n  const val = r.gPos\n    ? `=г(\"${r.yUrl}\";\"${r.gPos}\")`\n    : '—';\n  data.push({ range: `${sheet}!${col}${r.rowNum}`, values: [[val]] });\n}\n\nreturn [{ json: { body: { valueInputOption: 'USER_ENTERED', data } } }];\n"
+      },
+      "id": "136fdd3e-0d43-4d32-a4cc-150bf7692876",
+      "name": "Body Google1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "be87b96e-6ed0-4e71-8ab4-eb759c9e713d",
+      "name": "Write Main1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1152,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "c9788b7f-c8d6-402b-a0b0-6f7093292afa",
+      "name": "Write Яндекс1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1152,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/' + $('Config').first().json.SPREADSHEET_ID + '/values:batchUpdate' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "54785260-6fd2-4c51-9de1-6351a74185b2",
+      "name": "Write Google1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1152,
+        1488
+      ]
+    }
+  ],
+  "connections": {
+    "Запуск": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Читаем ключи",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем ключи": {
+      "main": [
+        [
+          {
+            "node": "Читаем ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Яндекс": {
+      "main": [
+        [
+          {
+            "node": "Читаем Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем Google": {
+      "main": [
+        [
+          {
+            "node": "Prepare Keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем ALL": {
+      "main": [
+        [
+          {
+            "node": "Читаем Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Keywords": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "Body Main1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Body Яндекс1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Body Google1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Яндекс",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Яндекс": {
+      "main": [
+        [
+          {
+            "node": "HTTP Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Google": {
+      "main": [
+        [
+          {
+            "node": "Parse Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Results": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Main1": {
+      "main": [
+        [
+          {
+            "node": "Write Main1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Яндекс1": {
+      "main": [
+        [
+          {
+            "node": "Write Яндекс1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body Google1": {
+      "main": [
+        [
+          {
+            "node": "Write Google1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "ff6ca886-3a34-45f8-9b6b-038556374353",
+  "activeVersionId": null,
+  "versionCounter": 39,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T19:35:24.692Z",
+      "createdAt": "2026-04-05T19:35:24.692Z",
+      "role": "workflow:owner",
+      "workflowId": "gtePZbmbiGRetNx2",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

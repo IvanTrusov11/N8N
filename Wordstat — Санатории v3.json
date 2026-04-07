@@ -1,0 +1,525 @@
+{
+  "updatedAt": "2026-03-16T09:15:13.183Z",
+  "createdAt": "2026-03-16T06:59:37.373Z",
+  "id": "DM3rwJjT1sYpZhTw",
+  "name": "Wordstat — Санатории v3",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bfdbdf29-42a1-46ec-953c-7ede997411df",
+      "name": "Запуск",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        4016,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-token",
+              "name": "yandex_token",
+              "value": "y0__xDtz-juAhih_z4g5KHd4RYBSLneGBtXmFadx9pLOlvg02qCYg",
+              "type": "string"
+            },
+            {
+              "id": "cfg-minus",
+              "name": "minus_words",
+              "value": "официальный,сайт,отзывы,социальный,как,номера,доехать,добраться,2025,где,фото,пенсионер,адрес,телефон,карта",
+              "type": "string"
+            },
+            {
+              "id": "cfg-regions",
+              "name": "regions",
+              "value": "1",
+              "type": "string"
+            },
+            {
+              "id": "cfg-limit",
+              "name": "top_limit",
+              "value": 10,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5eb51136-5c9e-480e-8f80-b8ffb47a95cc",
+      "name": "Конфиг",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4176,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Сбор СЯ для Сателлитов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "6630f971-e871-4238-bb48-7a955ccc92c0",
+      "name": "Читаем таблицу",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4352,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3bc1f301-47f0-4a23-89ea-be7d3a31715d",
+      "name": "Loop по строкам",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4736,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.wordstat.yandex.net/v1/topRequests",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Конфиг').first().json.yandex_token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ phrase: $json['H1'], regions: $('Конфиг').first().json.regions.split(',').map(Number) }) }}",
+        "options": {}
+      },
+      "id": "75189203-8e9a-48eb-acdd-ae8c021f8e21",
+      "name": "Wordstat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5104,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const minusStr = $('Конфиг').first().json.minus_words || '';\nconst minusWords = minusStr\n  .split(',')\n  .map(w => w.trim().toLowerCase())\n  .filter(w => w.length > 0);\n\nconst topLimit = Number($('Конфиг').first().json.top_limit) || 10;\n\nconst currentRow = $('Loop по строкам').item.json;\nconst clusterName = currentRow['H1'] || '';\nconst satellite = currentRow['Сателлит'] || '';\n\nconst apiResponse = $input.first().json;\nconst topRequests = apiResponse.topRequests || [];\n\n// Фильтр минус-слов\nconst filtered = topRequests.filter(item => {\n  const phrase = item.phrase.toLowerCase();\n  return !minusWords.some(minus => phrase.includes(minus));\n});\n\nconst limited = filtered.slice(0, topLimit);\n\nconst rows = [];\n\n// Заголовок кластера: название санатория + сайт через пробел\nrows.push({\n  json: {\n    запрос: `${clusterName} (${satellite})`,\n    частотность: ''\n  }\n});\n\nif (limited.length === 0) {\n  rows.push({\n    json: {\n      запрос: '— нет данных —',\n      частотность: ''\n    }\n  });\n} else {\n  for (const item of limited) {\n    rows.push({\n      json: {\n        запрос: item.phrase,\n        частотность: item.count\n      }\n    });\n  }\n}\n\n// Пустая строка-разделитель\nrows.push({\n  json: {\n    запрос: '',\n    частотность: ''\n  }\n});\n\nreturn rows;"
+      },
+      "id": "e9911028-f9cb-4b4f-91dd-2ef88dee0a53",
+      "name": "Фильтр + форматирование",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5264,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Сбор СЯ для Сателлитов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Результаты",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "запрос": "={{ $json.запрос }}",
+            "частотность": "={{ $json.частотность }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "запрос",
+              "displayName": "запрос",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "частотность",
+              "displayName": "частотность",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "beffa900-ad39-49af-905a-822b0f9dea0e",
+      "name": "Пишем результат",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5424,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "seconds"
+      },
+      "id": "65a903fd-99c8-4d42-90fe-7d0b6bdf4fc7",
+      "name": "⏱️ Wait 1 сек",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        4944,
+        400
+      ],
+      "webhookId": "wordstat-wait"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition-status",
+              "leftValue": "={{ $json['Статус'] }}",
+              "rightValue": "Готово",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "44d8154c-bce8-42d9-b167-a505d667e8f0",
+      "name": "Не обработан?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        4544,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c",
+          "mode": "list",
+          "cachedResultName": "Kurort-Expert.ru - Сбор СЯ для Сателлитов",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VxcGuK_jOB0SY9bkP8Od2vEd8AW30BWmMvG6d2cXl7c/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "H1": "={{ $json._h1_to_update }}",
+            "Статус": "Готово",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "H1"
+          ],
+          "schema": [
+            {
+              "id": "H1",
+              "displayName": "H1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Сателлит",
+              "displayName": "Сателлит",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Статус",
+              "displayName": "Статус",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "90cd0294-472b-4665-a4a5-c47c5b0612cf",
+      "name": "Статус",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5760,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "a9QZU9EqwzLuJGIO",
+          "name": "Google Sheets API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Берём H1 текущей строки чтобы найти её в таблице\nconst h1 = $('Loop по строкам').item.json['H1'];\nreturn [{ json: { _h1_to_update: h1 } }];"
+      },
+      "id": "64ab7f52-f0f7-4baf-be6e-03fb2961ac5f",
+      "name": "Готовим обновление",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5584,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Запуск": {
+      "main": [
+        [
+          {
+            "node": "Конфиг",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Конфиг": {
+      "main": [
+        [
+          {
+            "node": "Читаем таблицу",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Читаем таблицу": {
+      "main": [
+        [
+          {
+            "node": "Не обработан?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop по строкам": {
+      "main": [
+        [
+          {
+            "node": "⏱️ Wait 1 сек",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⏱️ Wait 1 сек",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wordstat API": {
+      "main": [
+        [
+          {
+            "node": "Фильтр + форматирование",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Фильтр + форматирование": {
+      "main": [
+        [
+          {
+            "node": "Пишем результат",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Пишем результат": {
+      "main": [
+        [
+          {
+            "node": "Готовим обновление",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱️ Wait 1 сек": {
+      "main": [
+        [
+          {
+            "node": "Wordstat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Не обработан?": {
+      "main": [
+        [
+          {
+            "node": "Loop по строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Статус": {
+      "main": [
+        [
+          {
+            "node": "Loop по строкам",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Готовим обновление": {
+      "main": [
+        [
+          {
+            "node": "Статус",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "13c7af13-b5db-47c7-9cfc-ad8490de77e8",
+  "activeVersionId": null,
+  "versionCounter": 30,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-03-16T06:59:37.377Z",
+      "createdAt": "2026-03-16T06:59:37.377Z",
+      "role": "workflow:owner",
+      "workflowId": "DM3rwJjT1sYpZhTw",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}

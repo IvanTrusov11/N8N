@@ -1,0 +1,377 @@
+{
+  "updatedAt": "2026-03-20T09:19:22.845Z",
+  "createdAt": "2026-02-22T19:47:08.471Z",
+  "id": "rAgvMzX6X70bmCSV",
+  "name": "Тест настройки БД",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        528
+      ],
+      "id": "6eec790f-200b-49ba-a09a-56cf50c92ba8",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "formTitle": "Загрузка файлов",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "data",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        528
+      ],
+      "id": "299a6aa8-9eaa-48a1-b5a0-09369020003f",
+      "name": "On form submission",
+      "webhookId": "909ea70f-90e7-40e0-8b14-87e921cd8343"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "FILE-NAME",
+                "value": "={{ $('On form submission').item.json.data[0].filename }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        592
+      ],
+      "id": "99ade9db-9afa-40aa-ac83-8bbd238f4e79",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "=documents",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        368
+      ],
+      "id": "1f004390-b37a-448d-b91c-05a9f9fa00c8",
+      "name": "Supabase Vector Store1"
+    },
+    {
+      "parameters": {
+        "separator": ".",
+        "chunkOverlap": 100
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        32,
+        736
+      ],
+      "id": "8e544a42-4487-4d73-8cd1-f4fe92eb79b2",
+      "name": "Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        560
+      ],
+      "id": "7e0c9035-5ced-4836-bf0f-e0995d6d4ad7",
+      "name": "Embeddings OpenAI1"
+    },
+    {
+      "parameters": {
+        "content": "## Область для загрузи PDF и прочих документов\n\nЧто нужно сделать по шагам:\n1. Вам нужны прямые API OpenAI\n2. Superbase аккаунт\n2.1. Создать векторную БД\n2.2. Вы можете создать 2 БД\n3. Запишите в БД данные",
+        "height": 820,
+        "width": 1440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1184,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "8e67d04f-e81d-4e78-a935-946500039ce7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Код для создания векторной БД\n\n\n-- 1) Включить расширение pgvector (в Supabase обычно доступно как \"vector\")\nCREATE EXTENSION IF NOT EXISTS vector;\n\n-- 2) Создать таблицу documents\nCREATE TABLE IF NOT EXISTS documents (\n  id BIGSERIAL PRIMARY KEY,\n  content TEXT,\n  metadata JSONB,\n  embedding VECTOR(1536) -- замените 1536 на нужный вам размер векторов\n);\n\n-- 3) Опционально: создать индекс для ускорения поиска (IVFFlat). \n--    Подойдёт для больших наборов данных. Параметр 'lists' подберите эмпирически (e.g., 100, 1024).\n--    Для hnsw используйте: USING ivfflat(embedding) или USING hnsw (если сборка позволяет).\n--    Пример для ivfflat:\nCREATE INDEX IF NOT EXISTS idx_documents_embedding_ivfflat ON documents USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);\n\n-- Если ваша версия pgvector поддерживает hnsw (search_method = 'hnsw'), можно создать:\n-- CREATE INDEX IF NOT EXISTS idx_documents_embedding_hnsw ON documents USING hnsw (embedding);\n\n-- 4) Функция поиска — SQL-версия с учётом фильтра и match_count\nCREATE OR REPLACE FUNCTION match_documents(\n  query_embedding VECTOR,\n  match_count INT DEFAULT NULL,\n  filter JSONB DEFAULT '{}'::JSONB\n)\nRETURNS TABLE (\n  id BIGINT,\n  content TEXT,\n  metadata JSONB,\n  similarity DOUBLE PRECISION\n)\nLANGUAGE sql\nAS $$\n  SELECT\n    d.id,\n    d.content,\n    d.metadata,\n    1 - (d.embedding <=> query_embedding) AS similarity\n  FROM documents d\n  WHERE\n    -- если фильтр пустой объект или NULL — пропускаем условие,\n    -- иначе применяем jsonb containment\n    (filter IS NULL OR filter = '{}'::jsonb OR d.metadata @> filter)\n  ORDER BY d.embedding <=> query_embedding\n  LIMIT COALESCE(match_count, NULL);\n$$;",
+        "height": 1140,
+        "width": 1440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "5e45a868-ce13-4036-bbaa-94d36615f17e",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        1664
+      ],
+      "id": "d3e5b0dd-2760-4b60-a0d7-ccbce93ff004",
+      "name": "Embeddings OpenAI"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=## Роль\nты пишешь небольшие заметки по теме, которую даст тебе пользователь\n\n## Подключенные инструменты\nСделай минимум 3 запроса к supabase. Это инструмент с патентами Google. Поэтому ты должен переформулировать вопросы в стиле патентной документации Google, чтобы находить там ответы.",
+          "maxIterations": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        1328
+      ],
+      "id": "010703cd-9edb-41e8-a51e-c2849121a0a6",
+      "name": "Писатель",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        1536
+      ],
+      "id": "a6509e2a-babd-4b54-9cc6-9140a3b6744f",
+      "name": "OpenRouter Chat Model3"
+    },
+    {
+      "parameters": {
+        "content": "## Как подключить к реальному УК\n1. Найдите в промтах место, где описывается работа с supabase\n1.1. Опишите в нем вашу БД, что там находится и в каких случаях делать туда запросы\n\n2. Напишите количество запросов на 1 материал\n\n3. В описании Ноды Supabase опишите, что в ней находится ",
+        "height": 240,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -16,
+        1296
+      ],
+      "typeVersion": 1,
+      "id": "c0f0e5d1-4af8-48b1-ac02-46e1064ee8eb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1200,
+        1360
+      ],
+      "id": "0804190a-08ae-4aa7-841a-1127bacf5a59",
+      "name": "When chat message received",
+      "webhookId": "2c99ee15-636d-4fdb-8fea-c41e67c290e2"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Здесь лежат кейсы компании",
+        "tableName": {
+          "__rl": true,
+          "value": "=documents",
+          "mode": "id"
+        },
+        "topK": 10,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -688,
+        1520
+      ],
+      "id": "10684bed-414b-436e-b69d-ed9918075f12",
+      "name": "База данных"
+    }
+  ],
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "База данных",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Писатель",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Писатель",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "База данных": {
+      "ai_tool": [
+        [
+          {
+            "node": "Писатель",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c7e28a47-55c0-4478-979d-bf220bd7fd32",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-02-22T19:47:08.476Z",
+      "createdAt": "2026-02-22T19:47:08.476Z",
+      "role": "workflow:owner",
+      "workflowId": "rAgvMzX6X70bmCSV",
+      "projectId": "pyuqlYweDKoevpGi",
+      "project": {
+        "updatedAt": "2025-10-10T10:01:50.989Z",
+        "createdAt": "2025-10-10T09:59:41.178Z",
+        "id": "pyuqlYweDKoevpGi",
+        "name": "iv tru11 <ivtru11@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null
+      }
+    }
+  ]
+}
